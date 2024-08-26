@@ -1,0 +1,32 @@
+{
+  "name": "nodejs-file-upload",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently \"npm run server\" \"npm run build\"",
+    "server": "nodemon .",
+    "build": "npx tailwindcss -i ./public/src/tailwindcss/input.css -o ./public/src/tailwindcss/output.css --watch"
+  },
+  "private": false,
+  "keywords": ["web", "cloud", "nodejs", "express", "file-upload", "tailwindcss"],
+  "type": "module",
+  "author": "akshtt-dev",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-handlebars": "^8.0.1",
+    "express-session": "^1.18.0",
+    "mongoose": "^8.5.4",
+    "multer": "^1.4.5-lts.1",
+    "ssh2-sftp-client": "^11.0.0",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.4",
+    "tailwindcss": "^3.4.10"
+  }
+}

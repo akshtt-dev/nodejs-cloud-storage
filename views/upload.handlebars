@@ -1,0 +1,79 @@
+<main class="h-screen w-full overflow-hidden">
+    {{> nav}}
+    <section class="h-full bg-gradient-to-br from-gray-800 to-gray-900">
+        <div class="flex justify-center items-center h-full">
+            <form class="flex flex-col gap-4" id="upload-form">
+                <!-- Hidden file input -->
+                <input type="file" name="file" id="file" class="hidden">
+                <!-- Custom file input box -->
+                <label for="file" class="w-64 h-64 bg-gray-700 rounded-lg p-4 flex flex-col justify-center items-center cursor-pointer">
+                    <!-- SVG Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" class="w-16 h-16 text-slate-200" fill="none">
+                        <path
+                            d="M2.99996 14L3.2338 14.6626C4.14396 17.2413 4.59903 18.5307 5.63738 19.2654C6.67572 20 8.04305 20 10.7777 20H13.2222C15.9569 20 17.3242 20 18.3625 19.2654C19.4009 18.5307 19.856 17.2413 20.7661 14.6626L21 14"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <path
+                            d="M12 4V14M12 4C11.2997 4 9.99149 5.9943 9.49996 6.5M12 4C12.7002 4 14.0084 5.9943 14.5 6.5"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span id="fileLabel" class="mt-4 text-slate-400">No file chosen</span>
+                </label>
+                <!-- Progress bar -->
+                <div class="w-full h-4 bg-gray-700 rounded">
+                    <div id="progressBar" class="h-full bg-blue-500 rounded" style="width: 0%;"></div>
+                </div>
+                <!-- Submit button -->
+                <input type="submit" value="Upload"
+                    class="text-xl text-slate-200 py-1 px-2 font-semibold rounded-md shadow-md bg-gradient-to-tr from-gray-600 to-gray-700 cursor-pointer">
+            </form>
+        </div>
+    </section>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const fileInput = document.getElementById('file');
+        const label = document.getElementById('fileLabel');
+        const progressBar = document.getElementById('progressBar');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                label.textContent = fileInput.files[0].name;
+            } else {
+                label.textContent = 'No file chosen';
+            }
+        });
+
+        const form = document.getElementById('upload-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/file/upload');
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    alert('File uploaded successfully');
+                    progressBar.style.width = '0%'; // Reset progress bar
+                } else {
+                    alert('Failed to upload file');
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                alert('Failed to upload file');
+            });
+
+            xhr.send(formData);
+        });
+    });
+</script>
