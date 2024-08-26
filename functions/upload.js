@@ -1,12 +1,12 @@
 import { sftp } from "../index.js";
 import fs from "fs";
 
-async function uploadFunction(file, uniqueFilename) {
+async function uploadFunction(file, uniqueFilename, username) {
   try {
     // Define the target directory on the SFTP server
     const targetDir = "node-file-transfer"; 
     // Use a forward slash to construct the remote path
-    const remotePath = `${targetDir}/${uniqueFilename}`; 
+    const remotePath = `${targetDir}/user-uploads/${username}/${uniqueFilename}`; 
 
     // Check if the target directory exists, and create it if it does not
     try {

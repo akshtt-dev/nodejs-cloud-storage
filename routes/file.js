@@ -38,6 +38,11 @@ router.post("/upload", checkAuth, upload.single("file"), async function (req, re
     const username = req.session.user.username;
     const filename = req.file.filename;
 
+    if (!req.file) {
+      res.status(400).json({ error: "No file uploaded" });
+      return;
+    }
+
     // Find the user's document and update it with the new filename
     await Upload.findOneAndUpdate(
       { username: username },
@@ -50,7 +55,7 @@ router.post("/upload", checkAuth, upload.single("file"), async function (req, re
 
     // Proceed with the file processing
     console.log("File processing started...");
-    await uploadFunction(req.file, filename);
+    await uploadFunction(req.file, filename, username);
     console.log("File processing completed.");
 
     // Delete the file from the local server
