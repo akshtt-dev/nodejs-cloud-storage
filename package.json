@@ -10,11 +10,20 @@
     "build": "npx tailwindcss -i ./public/src/tailwindcss/input.css -o ./public/src/tailwindcss/output.css --watch"
   },
   "private": false,
-  "keywords": ["web", "cloud", "nodejs", "express", "file-upload", "tailwindcss"],
+  "keywords": [
+    "web",
+    "cloud",
+    "nodejs",
+    "express",
+    "file-upload",
+    "tailwindcss"
+  ],
   "type": "module",
   "author": "akshtt-dev",
   "license": "MIT",
   "dependencies": {
+    "bcrypt": "^5.1.1",
+    "connect-mongo": "^5.1.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-handlebars": "^8.0.1",

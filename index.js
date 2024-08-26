@@ -1,4 +1,6 @@
 import express from "express";
+import session from "express-session";
+import MongoStore from "connect-mongo";
 import mongoose from "mongoose";
 import { engine } from "express-handlebars";
 import { join, dirname } from "path";
@@ -63,12 +65,40 @@ app.use((req, res, next) => {
   }
 });
 
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "ilovecookies",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // true in production
+      maxAge: 604800000, // 7 days in milliseconds
+    },
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      ttl: 7 * 24 * 60 * 60,
+    }),
+  })
+);
+
+// Middleware to check if user is authenticated
+export function checkAuth(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    res.redirect("/auth/login");
+  }
+}
+
 import indexRouter from "./routes/index.js";
-import uploadRouter from "./routes/upload.js";
 import fileRouter from "./routes/file.js";
+import dashboardRouter from "./routes/dashboard/index.js";
+import authRouter from "./routes/auth/index.js";
+
 app.use("/", indexRouter);
-app.use("/upload", uploadRouter);
 app.use("/file", fileRouter);
+app.use("/dashboard", dashboardRouter);
+app.use("/auth", authRouter);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

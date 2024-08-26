@@ -1,0 +1,14 @@
+<main class="bg-gradient-to-br from-slate-900 to-slate-950 h-screen flex justify-center items-center overflow-hidden select-none">
+    <div>
+        <h1 class="text-slate-200 text-3xl font-bold mb-4">Signup to continue <span class="font-bold">❣️</span></h1>
+        <form action="/auth/signup" method="post" class="flex flex-col">
+            <label for="username" class="text-slate-300 font-semibold text-xl mb-1">Username</label>
+            <input type="text" name="username" id="username" placeholder="Username"
+                class="bg-slate-200 py-1 px-2 rounded-sm mb-4" required>
+            <label for="password" class="text-slate-300 font-semibold text-xl mb-1">Password</label>
+            <input type="password" name="password" id="password" placeholder="Password"
+                class="bg-slate-200 py-1 px-2 rounded-sm mb-4" required>
+            <input type="submit" value="Login" class="bg-blue-500 py-1 px-2 font-semibold text-slate-200 rounded-sm">
+        </form>
+    </div>
+</main>

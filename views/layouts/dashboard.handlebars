@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/src/tailwindcss/output.css">
+</head>
+
+<body>
+    <main class="flex flex-row h-screen w-full">
+        <section class="bg-gradient-to-br from-slate-800 to-slate-900 md:w-1/6 h-full pt-2 border-r-4 border-gray-400">
+            <h1 class="text-slate-200 text-2xl text-center">{{user}}</h1>
+            <div class="flex flex-col px-6 gap-4 pt-4">
+                <a href="/dashboard"><div class="px-2 py-1 bg-slate-700 rounded-md h-8"><h1 class="text-slate-200 font-semibold text-md">Dashboard</h1></div></a>
+                <a href="/dashboard/upload"><div class="px-2 py-1 bg-slate-700 rounded-md h-8"><h1 class="text-slate-200 font-semibold text-md">Upload</h1></div></a>
+            </div>
+        </section>
+        <section class="bg-gradient-to-br from-slate-700 to-slate-900 md:w-5/6 h-full">
+            {{{body}}}
+        </section>
+    </main>
+</body>
+
+</html>
