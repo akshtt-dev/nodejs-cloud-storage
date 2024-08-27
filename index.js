@@ -18,22 +18,21 @@ async function main() {
 }
 
 // SFTP CLIENT
-import Client from 'ssh2-sftp-client';
+import Client from "ssh2-sftp-client";
 let sftp; // Declare sftp as a let variable
+const sftpConfig = {
+  host: process.env.SFTP_HOST,
+  username: process.env.SFTP_USERNAME,
+  password: process.env.SFTP_PASSWORD,
+  port: process.env.SFTP_PORT,
+  retries: 5,
+  retry_factor: 2,
+  retry_minTimeout: 2000,
+};
 
 async function connectSFTP() {
-  const sftpConfig = {
-    host: process.env.SFTP_HOST,
-    username: process.env.SFTP_USERNAME,
-    password: process.env.SFTP_PASSWORD,
-    port: process.env.SFTP_PORT,
-    retries: 5,
-    retry_factor: 2,
-    retry_minTimeout: 2000,
-  };
-  
   sftp = new Client();
-  
+
   try {
     await sftp.connect(sftpConfig);
     console.log("Connected to SFTP server.");
@@ -105,4 +104,4 @@ app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
 
-export { sftp }; // Export after sftp is initialized
+export { sftp, sftpConfig }; // Export after sftp is initialized

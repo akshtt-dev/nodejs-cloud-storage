@@ -1,13 +1,15 @@
-<main class="h-screen w-full overflow-hidden">
+<main class="h-screen w-full ">
     <section class="h-full">
         <div class="flex justify-center items-center h-full">
             <form class="flex flex-col gap-4" id="upload-form">
                 <!-- Hidden file input -->
                 <input type="file" name="file" id="file" class="hidden">
                 <!-- Custom file input box -->
-                <label for="file" class="w-64 h-64 bg-gray-700 rounded-lg p-4 flex flex-col justify-center items-center cursor-pointer">
+                <label for="file"
+                    class="w-64 h-64 bg-gray-700 rounded-lg p-4 flex flex-col justify-center items-center cursor-pointer">
                     <!-- SVG Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" class="w-16 h-16 text-slate-200" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+                        class="w-16 h-16 text-slate-200" fill="none">
                         <path
                             d="M2.99996 14L3.2338 14.6626C4.14396 17.2413 4.59903 18.5307 5.63738 19.2654C6.67572 20 8.04305 20 10.7777 20H13.2222C15.9569 20 17.3242 20 18.3625 19.2654C19.4009 18.5307 19.856 17.2413 20.7661 14.6626L21 14"
                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
@@ -28,6 +30,33 @@
         </div>
     </section>
 </main>
+
+<div id="infoDivOk" class="top-0 right-0 bg-gradient-to-br from-teal-700 to-teal-800 hidden py-1 px-4">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="w-8 h-8 text-slate-200 inline">
+        <path
+            d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z"
+            stroke="currentColor" stroke-width="1.5" />
+        <path d="M8 12.5L10.5 15L16 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" />
+    </svg>
+    <span class="text-slate-900 font-semibold text-xl">File Uploaded</span>
+</div>
+<div id="infoDivErr" class="top-0 right-0 bg-gradient-to-br from-teal-700 to-teal-800 hidden py-1 px-4">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-8 w-8 text-slate-200 inline">
+        <path
+            d="M15.0157 5C15.0157 3.58579 15.0157 2.87868 15.5273 2.43934C16.0388 2 16.8622 2 18.509 2C20.1557 2 20.9791 2 21.4906 2.43934C22.0022 2.87868 22.0022 3.58579 22.0022 5C22.0022 6.41421 22.0022 7.12132 21.4906 7.56066C20.9791 8 20.1557 8 18.509 8C16.8622 8 16.0388 8 15.5273 7.56066C15.0157 7.12132 15.0157 6.41421 15.0157 5Z"
+            stroke="currentColor" stroke-width="1.5" />
+        <path
+            d="M15.0157 19C15.0157 17.5858 15.0157 16.8787 15.5273 16.4393C16.0388 16 16.8622 16 18.509 16C20.1557 16 20.9791 16 21.4906 16.4393C22.0022 16.8787 22.0022 17.5858 22.0022 19C22.0022 20.4142 22.0022 21.1213 21.4906 21.5607C20.9791 22 20.1557 22 18.509 22C16.8622 22 16.0388 22 15.5273 21.5607C15.0157 21.1213 15.0157 20.4142 15.0157 19Z"
+            stroke="currentColor" stroke-width="1.5" />
+        <path d="M8.5412 10.4825L5.52337 13.4949M8.5412 13.4949L5.52337 10.4825" stroke="currentColor"
+            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path
+            d="M7.04533 17.0314C9.8101 17.0314 12.0103 14.7709 12.0103 11.9931C12.0103 9.21534 9.76898 6.9635 7.0042 6.9635M7.04533 17.0314C4.28055 17.0314 1.99813 14.7709 1.99813 11.9931C1.99813 9.21534 4.23943 6.9635 7.0042 6.9635M7.04533 17.0314C6.97569 19.1612 8.53182 19.9388 9.63988 19.9795H12.0103M7.0042 6.9635C6.93385 4.80343 8.51708 4.04384 9.63988 3.99609H12.021"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <span class="text-slate-900 font-semibold text-xl">Failed To Upload</span>
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -60,11 +89,17 @@
             });
 
             xhr.addEventListener('load', () => {
+                const infoDivOk = document.getElementById('infoDivOk');
+                const infoDivErr = document.getElementById('infoDivErr');
                 if (xhr.status === 200) {
-                    alert('File uploaded successfully');
+                    infoDivOk.classList.remove('hidden');
+                    infoDivOk.classList.add('absolute');
                     progressBar.style.width = '0%'; // Reset progress bar
+                    infoDivErr.classList.add('hidden');
                 } else {
-                    alert('Failed to upload file');
+                    infoDivOk.classList.add('hidden');
+                    infoDivErr.classList.remove('hidden');
+                    infoDivErr.classList.add('absolute');
                 }
             });
 
