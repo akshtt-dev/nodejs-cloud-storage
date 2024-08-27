@@ -2,22 +2,25 @@ import express from "express";
 import multer from "multer";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import uploadFunction from "../functions/upload.js";
+import sharp from "sharp";
 import fs from "fs";
-import { v4 as uuidv4 } from 'uuid';
-import { checkAuth } from "../index.js";
+import mime from "mime-types";
+import { uploadThumbnailToMongo } from "../functions/uploadThumbnail.js";
+import uploadFunction from "../functions/upload.js";
 import Upload from "../models/upload.js";
+import { checkAuth } from "../index.js";
+import { v4 as uuidv4 } from "uuid";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: (req, file, cb) => {
     cb(null, join(__dirname, "../public/src/uploads"));
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     const uniqueSuffix = uuidv4();
-    const extension = file.originalname.split('.').pop();
+    const extension = file.originalname.split(".").pop();
     const uniqueFilename = `${uniqueSuffix}.${extension}`;
     cb(null, uniqueFilename);
   },
@@ -32,35 +35,79 @@ router.get("/", (req, res) => {
   res.render("file");
 });
 
-router.post("/upload", checkAuth, upload.single("file"), async function (req, res) {
-  // TODO: add a function so that only certain file types are uploaded or add functionality to upload al file types
+// TODO: FIX THIS UPLOAD
+router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
+  const username = req.session.user.username;
+  const file = req.file;
   try {
-    const username = req.session.user.username;
-    const filename = req.file.filename;
-
-    if (!req.file) {
-      res.status(400).json({ error: "No file uploaded" });
-      return;
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Find the user's document and update it with the new filename
+    // Check file type
+    const mimeType = mime.lookup(file.originalname);
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+
+    // Save file info in MongoDB
     await Upload.findOneAndUpdate(
       { username: username },
-      { $push: { files: { filename: req.file.filename, size: req.file.size } } },
+      { $push: { files: { filename: file.filename, size: file.size } } },
       { upsert: true, new: true }
-    );    
-
-    console.log("File record updated successfully.", username, filename);
+    );
+    // Respond to the user immediately
     res.json({ message: "File uploaded successfully" });
 
-    // Proceed with the file processing
-    console.log("File processing started...");
-    await uploadFunction(req.file, filename, username);
-    console.log("File processing completed.");
+    // Define file paths
+    const imagePath = join(__dirname, "../public/src/uploads", file.filename);
+    const thumbnailPath = join(
+      __dirname,
+      "../public/src/uploads",
+      `thumb_${file.filename}`
+    );
 
-    // Delete the file from the local server
-    fs.unlinkSync(req.file.path); 
-    console.log("Local file deleted successfully.");
+    // Create and handle thumbnails and SFTP upload concurrently
+    const thumbnailPromise = new Promise(async (resolve, reject) => {
+      if (
+        allowedMimeTypes.includes(mimeType) &&
+        mimeType.startsWith("image/")
+      ) {
+        try {
+          // Ensure the image file exists
+          if (!fs.existsSync(imagePath)) {
+            throw new Error(`Image file does not exist: ${imagePath}`);
+          }
+
+          // Generate thumbnail
+          await sharp(imagePath)
+            .resize(200, 200) // Adjust size as needed
+            .toFile(thumbnailPath);
+
+          // Save thumbnail to MongoDB
+          await uploadThumbnailToMongo(thumbnailPath, `thumb_${file.filename}`);
+
+          // Clean up thumbnail file
+          fs.unlinkSync(thumbnailPath);
+          resolve();
+        } catch (error) {
+          console.error("Error processing thumbnail:", error);
+          reject(error);
+        }
+      } else {
+        resolve(); // No thumbnail processing needed
+      }
+    });
+
+    const sftpUploadPromise = uploadFunction(file, file.filename, username);
+
+    // Wait for both operations to complete (optional)
+    try {
+      await Promise.all([thumbnailPromise, sftpUploadPromise]);
+    } catch (error) {
+      console.error("Error during concurrent operations:", error);
+    }
+
+    // Remove local file
+    fs.unlinkSync(file.path);
   } catch (err) {
     console.error("Error during file upload:", err);
     res.status(500).json({ error: "File upload failed" });

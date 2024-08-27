@@ -1,0 +1,63 @@
+<section class="flex flex-col pt-4 pl-4">
+  <!-- File Stats Section -->
+  <div class="bg-slate-900 py-4 px-6 md:w-60 rounded-md shadow-sm select-none mb-4">
+    <h1 class="text-slate-400 text-2xl font-medium">Files</h1>
+    <h1 class="text-slate-200 text-3xl font-medium">{{filesCount}}</h1>
+  </div>
+
+  <!-- File List Section -->
+  <div class="bg-slate-800 p-6 rounded-md shadow-sm">
+    <ul class="space-y-4">
+      {{#each files}}
+      <li class="flex items-center justify-between p-2 bg-slate-700 rounded-md">
+        <span class="text-slate-200">{{this.name}}</span>
+        <a href="/file/download/{{this.name}}" target="_blank" class="text-blue-400 hover:text-blue-300">
+          Download
+        </a>
+        <button onclick="previewFile('{{this.name}}')" class="text-blue-400 hover:text-blue-300">
+          Preview
+        </button>
+      </li>
+      {{/each}}
+    </ul>
+  </div>
+</section>
+
+<!-- Preview Section -->
+<div id="preview-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+  style="display: none;">
+  <div class="relative bg-slate-900 p-4 rounded-md shadow-lg">
+    <button onclick="closePreview()" class="absolute top-2 right-2 text-white text-xl">×</button>
+    <img id="preview-image" class="max-w-full max-h-[80vh] hidden" />
+    <video id="preview-video" class="max-w-full max-h-[80vh] hidden" controls></video>
+  </div>
+</div>
+
+<script>
+  function previewFile(filename) {
+    const previewContainer = document.getElementById('preview-container');
+    const previewImage = document.getElementById('preview-image');
+    const previewVideo = document.getElementById('preview-video');
+    const fileExtension = filename.split('.').pop().toLowerCase();
+    const previewUrl = `/file/preview?filename=${encodeURIComponent(filename)}`;
+
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+      previewImage.src = previewUrl;
+      previewImage.style.display = 'block';
+      previewVideo.style.display = 'none';
+    } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+      previewVideo.src = previewUrl;
+      previewVideo.style.display = 'block';
+      previewImage.style.display = 'none';
+    } else {
+      alert('Preview not available for this file type');
+      return;
+    }
+
+    previewContainer.style.display = 'flex';
+  }
+
+  function closePreview() {
+    document.getElementById('preview-container').style.display = 'none';
+  }
+</script>
