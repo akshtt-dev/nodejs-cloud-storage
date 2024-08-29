@@ -13,6 +13,14 @@ const fileSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  thumbnailBuffer: {
+    type: Buffer,
+    default: null,
+  },
+  fileType: {
+    type: String,
+    required: true,
+  },
 });
 
 const mongooseSchema = new mongoose.Schema({

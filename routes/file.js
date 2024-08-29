@@ -51,21 +51,33 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
   );
 
   try {
-    // Save file info in MongoDB
-    await Upload.findOneAndUpdate(
-      { username: username },
-      { $push: { files: { filename: file.filename, size: file.size } } },
-      { upsert: true, new: true }
-    );
-
-    // Respond to the user immediately
-    res.json({ message: "File uploaded successfully" });
-
     // Process the thumbnail if the file is an allowed image type
-    if (allowedMimeTypes.includes(mimeType)) {
-      await processThumbnail(imagePath, thumbnailPath);
+    try {
+      let thumbnailBuffer;
+      if (allowedMimeTypes.includes(mimeType)) {
+        await processThumbnail(imagePath, thumbnailPath);
+        thumbnailBuffer = await fs.readFile(thumbnailPath);
+      }
+      // Save file info in MongoDB
+      await Upload.findOneAndUpdate(
+        { username: username },
+        {
+          $push: {
+            files: {
+              filename: file.filename,
+              size: file.size,
+              thumbnailBuffer,
+              fileType: mimeType,
+            },
+          },
+        },
+        { upsert: true, new: true }
+      );
+      // Respond to the user immediately
+      res.json({ message: "File uploaded successfully" });
+    } catch (error) {
+      throw new Error("An error occurred");
     }
-
     // Upload to SFTP and delete the local file afterward
     await uploadFunction(file, file.filename, username);
     await fs.unlink(file.path);
