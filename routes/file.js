@@ -6,7 +6,7 @@ import sharp from "sharp";
 import fs from "fs/promises";
 import mime from "mime-types";
 import uploadFunction from "../functions/upload.js";
-import Upload from "../models/Upload.js";
+import Upload from "../models/upload.js";
 import { checkAuth } from "../index.js";
 import { v4 as uuidv4 } from "uuid";
 
