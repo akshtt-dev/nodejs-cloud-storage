@@ -1,20 +1,21 @@
-import { sftp } from "../index.js";
+import Upload from "../models/Upload.js";
 
 export async function listFilesFunction(username) {
   try {
-    const targetDir = "node-file-transfer";
-    const remotePath = `${targetDir}/user-uploads/${username}`;
+    // Retrieve the document for the specified username
+    const upload = await Upload.findOne({ username: username });
 
-    const dirExists = await sftp.exists(remotePath);
-    if (!dirExists) {
-      console.log(`Directory does not exist: ${remotePath}`);
+    // Check if the document was found
+    if (!upload) {
       return [];
     }
 
-    const files = await sftp.list(remotePath);
+    // Directly map the filenames from the files array
+    const files = upload.files.map(file => file.filename);
+    
     return files;
   } catch (err) {
-    console.error("Error accessing SFTP:", err);
-    return []; // Return an empty array on error
+    console.error("Error listing files:", err);
+    return [];
   }
 }

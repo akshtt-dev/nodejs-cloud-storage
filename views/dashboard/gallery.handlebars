@@ -1,35 +1,49 @@
-<section class="flex flex-col pt-4 pl-4">
+<section class="flex flex-col pt-4 px-4 space-y-6">
   <!-- File Stats Section -->
-  <div class="bg-slate-900 py-4 px-6 md:w-60 rounded-md shadow-sm select-none mb-4">
-    <h1 class="text-slate-400 text-2xl font-medium">Files</h1>
-    <h1 class="text-slate-200 text-3xl font-medium">{{filesCount}}</h1>
+  <div class="bg-slate-900 py-4 px-6 md:w-60 rounded-md shadow-md select-none mb-4">
+    <h1 class="text-slate-400 text-xl font-medium">Files</h1>
+    <h1 class="text-slate-200 text-4xl font-semibold">{{filesCount}}</h1>
   </div>
 
   <!-- File List Section -->
-  <div class="bg-slate-800 p-6 rounded-md shadow-sm max-h-96 md:max-h-72 overflow-y-auto">
+  <div class="bg-slate-800 p-6 rounded-md shadow-md max-h-96 md:max-h-72 overflow-y-auto">
     <ul class="space-y-4">
       {{#each files}}
-      <li class="flex items-center justify-between p-2 bg-slate-700 rounded-md">
-        <span class="text-slate-200">{{this.name}}</span>
-        <a href="/file/download/{{this.name}}" target="_blank" class="text-blue-400 hover:text-blue-300">
-          Download
-        </a>
-        <button onclick="previewFile('{{this.name}}')" class="text-blue-400 hover:text-blue-300">
-          Preview
-        </button>
+      <li
+        class="flex items-center justify-between p-3 bg-slate-700 rounded-md hover:bg-slate-600 transition duration-200">
+        <span class="text-slate-200">{{this}}</span>
+        <div class="flex space-x-2">
+          <a href="/file/download/{{this}}" target="_blank"
+            class="text-blue-400 hover:text-blue-300 transition duration-200">
+            Download
+          </a>
+          <button onclick="previewFile('{{this}}')" class="text-blue-400 hover:text-blue-300 transition duration-200">
+            Preview
+          </button>
+        </div>
       </li>
       {{/each}}
     </ul>
   </div>
+
+  <!-- Image Thumbnails Section -->
+  <div class="flex flex-row flex-wrap gap-4 mt-4 bg-slate-800 p-4 rounded-md overflow-y-auto overflow-x-hidden">
+    {{#each files}}
+    <a href="/file/download/{{this}}">
+      <img src="/file/preview/{{this}}" alt=""
+        class="w-32 h-32 object-cover rounded-md shadow-sm hover:opacity-80 transition duration-200 cursor-pointer">
+    </a>
+    {{/each}}
+  </div>
 </section>
 
 <!-- Preview Section -->
-<div id="preview-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-  style="display: none;">
-  <div class="relative bg-slate-900 p-4 rounded-md shadow-lg">
-    <button onclick="closePreview()" class="absolute top-2 right-2 text-white text-xl">×</button>
-    <img id="preview-image" class="max-w-full max-h-[80vh] hidden" />
-    <video id="preview-video" class="max-w-full max-h-[80vh] hidden" controls></video>
+<div id="preview-container" class="fixed inset-0 bg-black bg-opacity-70 items-center justify-center z-50 hidden">
+  <div class="relative bg-slate-900 p-4 rounded-lg shadow-lg max-w-4xl max-h-[80vh] overflow-hidden">
+    <button onclick="closePreview()"
+      class="absolute top-2 right-2 text-white text-2xl hover:text-gray-400 transition duration-200">×</button>
+    <img id="preview-image" class="max-w-full max-h-full hidden" />
+    <video id="preview-video" class="max-w-full max-h-full hidden" controls></video>
   </div>
 </div>
 
@@ -39,7 +53,7 @@
     const previewImage = document.getElementById('preview-image');
     const previewVideo = document.getElementById('preview-video');
     const fileExtension = filename.split('.').pop().toLowerCase();
-    const previewUrl = `/file/preview?filename=${encodeURIComponent(filename)}`;
+    const previewUrl = `/file/preview/${filename}`;
 
     if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
       previewImage.src = previewUrl;
@@ -54,10 +68,10 @@
       return;
     }
 
-    previewContainer.style.display = 'flex';
+    previewContainer.classList.remove('hidden');
   }
 
   function closePreview() {
-    document.getElementById('preview-container').style.display = 'none';
+    document.getElementById('preview-container').classList.add('hidden');
   }
 </script>

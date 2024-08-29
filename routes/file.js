@@ -6,7 +6,7 @@ import sharp from "sharp";
 import fs from "fs/promises";
 import mime from "mime-types";
 import uploadFunction from "../functions/upload.js";
-import Upload from "../models/upload.js";
+import Upload from "../models/Upload.js";
 import { checkAuth } from "../index.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -95,5 +95,69 @@ async function processThumbnail(imagePath, thumbnailPath) {
     console.error("Error processing thumbnail:", error);
   }
 }
+
+router.get("/preview/:filename", checkAuth, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    const filename = req.params.filename;
+    // TODO: Validate and sanitize inputs if necessary
+
+    // Find the upload document
+    const upload = await Upload.findOne({
+      username: username,
+      "files.filename": filename,
+    });
+
+    if (!upload) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Find the specific file within the upload
+    const file = upload.files.find((file) => file.filename === filename);
+
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Check if thumbnailBuffer exists
+    if (!file.thumbnailBuffer) {
+      return res.status(404).json({ error: "Thumbnail not found" });
+    }
+
+    res.set("Content-Type", file.fileType);
+    res.send(file.thumbnailBuffer);
+  } catch (error) {
+    console.log("Error fetching thumbnail:", error);
+    res.status(500).json({ error: "Failed to fetch thumbnail" });
+  }
+});
+
+// router.get("/download/:filename", checkAuth, async (req, res) => {
+//   try {
+//     const username = req.session.user.username;
+//     const filename = req.params.filename;
+
+//     const upload = await Upload.findOne({
+//       username: username,
+//       "files.filename": filename,
+//     });
+
+//     if (!upload) {
+//       return res.status(404).json({ error: "File not found" });
+//     }
+
+//     const file = upload.files.find((file) => file.filename === filename);
+
+//     if (!file) {
+//       return res.status(404).json({ error: "File not found" });
+//     }
+
+//     res.set("Content-Type", file.fileType);
+//     res.send(file.thumbnailBuffer);
+//   } catch (error) {
+//     console.log("Error downloading file:", error);
+//     res.status(500).json({ error: "Failed to download file" });
+//   }
+// });
 
 export default router;
