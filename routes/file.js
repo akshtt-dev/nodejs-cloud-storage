@@ -57,6 +57,7 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
       if (allowedMimeTypes.includes(mimeType)) {
         await processThumbnail(imagePath, thumbnailPath);
         thumbnailBuffer = await fs.readFile(thumbnailPath);
+        fs.unlink(thumbnailPath);
       }
       // Save file info in MongoDB
       await Upload.findOneAndUpdate(
