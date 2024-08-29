@@ -3,9 +3,8 @@ import multer from "multer";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import sharp from "sharp";
-import fs from "fs";
+import fs from "fs/promises";
 import mime from "mime-types";
-import { uploadThumbnailToMongo } from "../functions/uploadThumbnail.js";
 import uploadFunction from "../functions/upload.js";
 import Upload from "../models/upload.js";
 import { checkAuth } from "../index.js";
@@ -35,77 +34,53 @@ router.get("/", (req, res) => {
   res.render("file");
 });
 
-// TODO: FIX THIS UPLOAD
 router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
   const username = req.session.user.username;
   const file = req.file;
+  if (!file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  const mimeType = mime.lookup(file.originalname);
+  const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+  const imagePath = join(__dirname, "../public/src/uploads", file.filename);
+  const thumbnailPath = join(
+    __dirname,
+    "../public/src/uploads",
+    `thumb_${file.filename}`
+  );
+
   try {
-    if (!file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    // Check file type
-    const mimeType = mime.lookup(file.originalname);
-    const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
-
     // Save file info in MongoDB
     await Upload.findOneAndUpdate(
       { username: username },
       { $push: { files: { filename: file.filename, size: file.size } } },
       { upsert: true, new: true }
     );
+
     // Respond to the user immediately
     res.json({ message: "File uploaded successfully" });
 
-    // Define file paths
-    const imagePath = join(__dirname, "../public/src/uploads", file.filename);
-    const thumbnailPath = join(
-      __dirname,
-      "../public/src/uploads",
-      `thumb_${file.filename}`
-    );
-
-    // Create and handle thumbnails and SFTP upload concurrently
-    const thumbnailPromise = (async () => {
-      if (
-        allowedMimeTypes.includes(mimeType) &&
-        mimeType.startsWith("image/")
-      ) {
-        try {
-          if (!fs.existsSync(imagePath)) {
-            throw new Error(`Image file does not exist: ${imagePath}`);
-          }
-
-          await sharp(imagePath).resize(200, 200).toFile(thumbnailPath);
-
-          await uploadThumbnailToMongo(thumbnailPath, `thumb_${file.filename}`);
-
-          fs.unlinkSync(thumbnailPath);
-        } catch (error) {
-          console.error("Error processing thumbnail:", error);
-          throw error;
-        }
-      }
-    })();
-
-    const sftpUploadPromise = uploadFunction(file, file.filename, username);
-
-    // Wait for both operations to complete (optional)
-    try {
-      await Promise.all([thumbnailPromise, sftpUploadPromise]);
-    } catch (error) {
-      console.error("Error during concurrent operations:", error);
+    // Process the thumbnail if the file is an allowed image type
+    if (allowedMimeTypes.includes(mimeType)) {
+      await processThumbnail(imagePath, thumbnailPath);
     }
 
-    try {
-      fs.unlinkSync(file.path);
-    } catch (err) {
-      console.error(`Error deleting file: ${file.path}`, err);
-    }
+    // Upload to SFTP and delete the local file afterward
+    await uploadFunction(file, file.filename, username);
+    await fs.unlink(file.path);
   } catch (err) {
     console.error("Error during file upload:", err);
     res.status(500).json({ error: "File upload failed" });
   }
 });
+
+async function processThumbnail(imagePath, thumbnailPath) {
+  try {
+    await sharp(imagePath).resize(200, 200).toFile(thumbnailPath);
+  } catch (error) {
+    console.error("Error processing thumbnail:", error);
+  }
+}
 
 export default router;

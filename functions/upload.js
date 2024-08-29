@@ -29,6 +29,7 @@ async function uploadFunction(file, uniqueFilename, username) {
     // Hook into the 'data' event to track progress
     let progress = 0;
     let lastProgress = 0;
+    console.log("Uploading file to SFTP server...");
     readStream.on("data", (chunk) => {
       uploadedBytes += chunk.length;
       progress = (uploadedBytes / localFileSize) * 100;
