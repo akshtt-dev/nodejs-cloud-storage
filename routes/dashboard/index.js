@@ -26,7 +26,7 @@ router.get("/gallery", checkAuth, async (req, res) => {
       layout: "dashboard",
       title: "Dashboard - Gallery",
       user: req.session.user.username,
-      files,
+      files: files,
       filesCount: files.length,
     });
   } catch (err) {

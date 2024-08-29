@@ -1,45 +1,58 @@
-<section class="flex flex-col pt-4 px-4 space-y-6">
+<section class="flex flex-col pt-4 px-4 space-y-6 h-full overflow-hidden">
   <!-- File Stats Section -->
-  <div class="bg-slate-900 py-4 px-6 md:w-60 rounded-md shadow-md select-none mb-4">
+  <div class="bg-slate-900 py-4 px-6 md:w-60 rounded-md shadow-lg select-none mb-4">
     <h1 class="text-slate-400 text-xl font-medium">Files</h1>
-    <h1 class="text-slate-200 text-4xl font-semibold">{{filesCount}}</h1>
+    <h1 class="text-slate-200 text-4xl font-bold">{{filesCount}}</h1>
   </div>
 
-  <!-- File List Section -->
-  <div class="bg-slate-800 p-6 rounded-md shadow-md max-h-96 md:max-h-72 overflow-y-auto">
-    <ul class="space-y-4">
-      {{#each files}}
-      <li
-        class="flex items-center justify-between p-3 bg-slate-700 rounded-md hover:bg-slate-600 transition duration-200">
-        <span class="text-slate-200">{{this}}</span>
-        <div class="flex space-x-2">
-          <a href="/file/download/{{this}}" target="_blank"
-            class="text-blue-400 hover:text-blue-300 transition duration-200">
-            Download
-          </a>
-          <button onclick="previewFile('{{this}}')" class="text-blue-400 hover:text-blue-300 transition duration-200">
-            Preview
-          </button>
-        </div>
-      </li>
-      {{/each}}
-    </ul>
-  </div>
+
+  <form class="flex flex-col gap-4" id="upload-form">
+    <!-- Hidden file input -->
+    <input type="file" name="file" id="file" class="hidden">
+    <!-- Custom file input box -->
+    <label for="file"
+      class="w-64 h-64 bg-slate-900 rounded-lg p-4 flex flex-col justify-center items-center cursor-pointer">
+      <!-- SVG Icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+        class="w-16 h-16 text-slate-200" fill="none">
+        <path
+          d="M2.99996 14L3.2338 14.6626C4.14396 17.2413 4.59903 18.5307 5.63738 19.2654C6.67572 20 8.04305 20 10.7777 20H13.2222C15.9569 20 17.3242 20 18.3625 19.2654C19.4009 18.5307 19.856 17.2413 20.7661 14.6626L21 14"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        <path d="M12 4V14M12 4C11.2997 4 9.99149 5.9943 9.49996 6.5M12 4C12.7002 4 14.0084 5.9943 14.5 6.5"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span id="fileLabel" class="mt-4 text-slate-400">No file chosen</span>
+    </label>
+  </form>
 
   <!-- Image Thumbnails Section -->
-  <div class="flex flex-row flex-wrap gap-4 mt-4 bg-slate-800 p-4 rounded-md overflow-y-auto overflow-x-hidden">
+  <div class="flex flex-row flex-wrap gap-4 mt-4 bg-slate-800 p-6 rounded-lg max-h-full overflow-y-auto">
     {{#each files}}
-    <a href="/file/download/{{this}}">
-      <img src="/file/preview/{{this}}" alt=""
-        class="w-32 h-32 object-cover rounded-md shadow-sm hover:opacity-80 transition duration-200 cursor-pointer">
-    </a>
+    <div class="bg-slate-900 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+      <a href="javascript:void(0);" onclick="previewFile('{{filename}}')" class="block">
+        <img src="/file/preview/{{filename}}" alt="{{filename}}"
+          class="mx-auto w-64 h-64 object-cover rounded-md shadow-sm hover:opacity-90 transition-opacity duration-200">
+      </a>
+      <div class="mt-2 text-center">
+        <h2 class="text-slate-300 text-lg font-medium">{{originalName}}</h2>
+        <p class="text-slate-500 text-sm">Created: {{date}}</p>
+        <p class="text-slate-500 text-sm">Size: {{size}} MB</p>
+        <p class="text-slate-500 text-sm">Type: {{fileType}}</p>
+      </div>
+      <a href="/file/download/{{filename}}">
+        <div class="w-full py-1 px-2 bg-green-600 shadow-sm rounded-sm">
+          <h1 class="text-center text-white text-md font-semibold font-sans">Download</h1>
+        </div>
+      </a>
+    </div>
     {{/each}}
   </div>
 </section>
 
 <!-- Preview Section -->
-<div id="preview-container" class="fixed inset-0 bg-black bg-opacity-70 items-center justify-center z-50 hidden">
-  <div class="relative bg-slate-900 p-4 rounded-lg shadow-lg max-w-4xl max-h-[80vh] overflow-hidden">
+<div id="preview-container"
+  class="fixed inset-0 bg-black bg-opacity-80 items-center justify-center z-50 transition-opacity duration-300 hidden">
+  <div class="relative bg-slate-900 p-4 rounded-lg shadow-2xl max-w-4xl max-h-[80vh] overflow-hidden animate-fade-in">
     <button onclick="closePreview()"
       class="absolute top-2 right-2 text-white text-2xl hover:text-gray-400 transition duration-200">×</button>
     <img id="preview-image" class="max-w-full max-h-full hidden" />
@@ -69,9 +82,57 @@
     }
 
     previewContainer.classList.remove('hidden');
+    previewContainer.classList.add('flex'); // Ensure the container is flex
   }
 
   function closePreview() {
-    document.getElementById('preview-container').classList.add('hidden');
+    const previewContainer = document.getElementById('preview-container');
+    previewContainer.classList.add('hidden');
+    previewContainer.classList.remove('flex'); // Hide the flex container
   }
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length > 0) {
+      label.textContent = fileInput.files[0].name;
+    } else {
+      label.textContent = 'No file chosen';
+    }
+  });
+
+  const form = document.getElementById('upload-form');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/file/upload');
+
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const percentComplete = (e.loaded / e.total) * 100;
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      const infoDivOk = document.getElementById('infoDivOk');
+      const infoDivErr = document.getElementById('infoDivErr');
+      if (xhr.status === 200) {
+        infoDivOk.classList.remove('hidden');
+        infoDivOk.classList.add('absolute');
+        infoDivErr.classList.add('hidden');
+      } else {
+        infoDivOk.classList.add('hidden');
+        infoDivErr.classList.remove('hidden');
+        infoDivErr.classList.add('absolute');
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      alert('Failed to upload file');
+    });
+
+    xhr.send(formData);
+  });
+  //TODO: make it to auto upload the file whenever a file is selected
 </script>

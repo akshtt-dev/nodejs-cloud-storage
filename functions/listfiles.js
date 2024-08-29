@@ -9,10 +9,15 @@ export async function listFilesFunction(username) {
     if (!upload) {
       return [];
     }
+    const files = upload.files.map((file) => ({
+      originalName: file.originalName,
+      filename: file.filename,
+      date: file.date,
+      size: (file.size / 1024 / 1024).toFixed(2),
+      thumbnailBuffer: file.thumbnailBuffer,
+      fileType: file.fileType,
+    }));
 
-    // Directly map the filenames from the files array
-    const files = upload.files.map(file => file.filename);
-    
     return files;
   } catch (err) {
     console.error("Error listing files:", err);

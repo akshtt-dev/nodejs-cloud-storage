@@ -65,6 +65,7 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
         {
           $push: {
             files: {
+              originalName: file.originalname,
               filename: file.filename,
               size: file.size,
               thumbnailBuffer,
@@ -132,32 +133,67 @@ router.get("/preview/:filename", checkAuth, async (req, res) => {
   }
 });
 
-// router.get("/download/:filename", checkAuth, async (req, res) => {
-//   try {
-//     const username = req.session.user.username;
-//     const filename = req.params.filename;
+import { sftp } from "../index.js";
 
-//     const upload = await Upload.findOne({
-//       username: username,
-//       "files.filename": filename,
-//     });
+// TODO: works for now but still need to be refactored
+router.get("/download/:filename", checkAuth, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    const filename = req.params.filename;
 
-//     if (!upload) {
-//       return res.status(404).json({ error: "File not found" });
-//     }
+    // Find the upload record in the database
+    const upload = await Upload.findOne({
+      username: username,
+      "files.filename": filename,
+    });
 
-//     const file = upload.files.find((file) => file.filename === filename);
+    if (!upload) {
+      return res.status(404).json({ error: "File not found" });
+    }
 
-//     if (!file) {
-//       return res.status(404).json({ error: "File not found" });
-//     }
+    // Define the local temporary path where the file will be downloaded
+    const localDir = join(__dirname, "../public/src/uploads/tmp");
+    const localPath = join(localDir, filename);
+    
+    try {
+      await fs.access(localDir);
+    } catch (error) {
+      await fs.mkdir(localDir, { recursive: true });
+    }
 
-//     res.set("Content-Type", file.fileType);
-//     res.send(file.thumbnailBuffer);
-//   } catch (error) {
-//     console.log("Error downloading file:", error);
-//     res.status(500).json({ error: "Failed to download file" });
-//   }
-// });
+    // Download the file from SFTP server to the local path
+    try {
+      console.log("Downloading file from SFTP:", filename);
+      await sftp.fastGet(`node-file-transfer/user-uploads/${username}/${filename}`, localPath);
+    } catch (error) {
+      console.error("Error downloading file from SFTP:", error);
+      return res.status(500).json({ error: "Failed to download file from SFTP" });
+    }
+    
+    // Verify the file exists before sending
+    try {
+      await fs.access(localPath);
+    } catch (error) {
+      console.error("Local file not found:", error);
+      return res.status(404).json({ error: "File not found on local server" });
+    }
+
+    // Send the file to the client
+    res.download(localPath, filename, (err) => {
+      // Cleanup: Delete the local temporary file after sending it to the client
+      fs.unlink(localPath).catch(unlinkErr => {
+        console.error("Error deleting temporary file:", unlinkErr);
+      });
+
+      if (err) {
+        console.error("Download error:", err);
+        return res.status(500).json({ error: "Failed to download file" });
+      }
+    });
+  } catch (error) {
+    console.error("Error in download route:", error);
+    res.status(500).json({ error: "Failed to download file" });
+  }
+});
 
 export default router;
