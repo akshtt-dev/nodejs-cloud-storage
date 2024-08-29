@@ -1,4 +1,4 @@
-import Upload from "../models/Upload.js";
+import Upload from "../models/upload.js";
 
 export async function listFilesFunction(username) {
   try {
