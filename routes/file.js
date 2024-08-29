@@ -66,36 +66,27 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
     );
 
     // Create and handle thumbnails and SFTP upload concurrently
-    const thumbnailPromise = new Promise(async (resolve, reject) => {
+    const thumbnailPromise = (async () => {
       if (
         allowedMimeTypes.includes(mimeType) &&
         mimeType.startsWith("image/")
       ) {
         try {
-          // Ensure the image file exists
           if (!fs.existsSync(imagePath)) {
             throw new Error(`Image file does not exist: ${imagePath}`);
           }
 
-          // Generate thumbnail
-          await sharp(imagePath)
-            .resize(200, 200) // Adjust size as needed
-            .toFile(thumbnailPath);
+          await sharp(imagePath).resize(200, 200).toFile(thumbnailPath);
 
-          // Save thumbnail to MongoDB
           await uploadThumbnailToMongo(thumbnailPath, `thumb_${file.filename}`);
 
-          // Clean up thumbnail file
           fs.unlinkSync(thumbnailPath);
-          resolve();
         } catch (error) {
           console.error("Error processing thumbnail:", error);
-          reject(error);
+          throw error;
         }
-      } else {
-        resolve(); // No thumbnail processing needed
       }
-    });
+    })();
 
     const sftpUploadPromise = uploadFunction(file, file.filename, username);
 
@@ -106,8 +97,11 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
       console.error("Error during concurrent operations:", error);
     }
 
-    // Remove local file
-    fs.unlinkSync(file.path);
+    try {
+      fs.unlinkSync(file.path);
+    } catch (err) {
+      console.error(`Error deleting file: ${file.path}`, err);
+    }
   } catch (err) {
     console.error("Error during file upload:", err);
     res.status(500).json({ error: "File upload failed" });

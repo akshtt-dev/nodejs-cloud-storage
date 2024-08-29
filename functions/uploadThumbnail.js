@@ -23,7 +23,11 @@ conn.on("error", (err) => {
 
 export async function uploadThumbnailToMongo(thumbnailPath, filename) {
   if (!dbConnected) {
-    return Promise.reject(new Error("Database connection not established."));
+    throw new Error("Database connection not established.");
+  }
+
+  if (!fs.existsSync(thumbnailPath)) {
+    throw new Error("Thumbnail file does not exist.");
   }
 
   return new Promise((resolve, reject) => {
@@ -31,7 +35,7 @@ export async function uploadThumbnailToMongo(thumbnailPath, filename) {
     const uploadStream = gfsBucket.openUploadStream(filename);
 
     let uploadedBytes = 0;
-    let totalBytes = fs.statSync(thumbnailPath).size;
+    const totalBytes = fs.statSync(thumbnailPath).size;
 
     console.log("Uploading thumbnail...");
 
@@ -39,14 +43,16 @@ export async function uploadThumbnailToMongo(thumbnailPath, filename) {
       .on("data", (chunk) => {
         uploadedBytes += chunk.length;
         const progress = ((uploadedBytes / totalBytes) * 100).toFixed(2);
-        console.log(`Upload Progress: ${progress}%`);
+        console.log(`Thumbnail Upload Progress: ${progress}%`);
       })
       .on("error", (err) => {
         console.error("Error reading file stream:", err);
+        fileStream.destroy();
+        uploadStream.abort();
         reject(err);
       })
       .pipe(uploadStream)
-      .on("finish", () => {
+      .on("close", () => {
         console.log("Thumbnail uploaded successfully.");
         resolve();
       })
