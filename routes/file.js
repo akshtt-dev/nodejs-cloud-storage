@@ -42,7 +42,7 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
   }
 
   const mimeType = mime.lookup(file.originalname);
-  const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+  const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"];
   const imagePath = join(__dirname, "../public/src/uploads", file.filename);
   const thumbnailPath = join(
     __dirname,
