@@ -11,7 +11,7 @@ const fileSchema = new mongoose.Schema({
   },
   date: {
     type: Date,
-    default: Date.now, // Automatically set the date to the current time
+    default: Date.now,
   },
   size: {
     type: Number,

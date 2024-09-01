@@ -9,11 +9,12 @@ export async function listFilesFunction(username) {
     if (!upload) {
       return [];
     }
+
     const files = upload.files.map((file) => ({
       originalName: file.originalName,
       filename: file.filename,
-      date: file.date,
-      size: (file.size / 1024 / 1024).toFixed(2),
+      date: file.date.toISOString(), // Send ISO string to the client
+      size: (file.size / 1024 / 1024).toFixed(2), // Convert size to MB and format to two decimal places
       thumbnailBuffer: file.thumbnailBuffer,
       fileType: file.fileType,
     }));
