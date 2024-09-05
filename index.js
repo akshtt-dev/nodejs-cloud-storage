@@ -17,33 +17,6 @@ async function main() {
   await mongoose.connect(process.env.MONGO_URI);
 }
 
-// SFTP CLIENT
-import Client from "ssh2-sftp-client";
-let sftp; // Declare sftp as a let variable
-const sftpConfig = {
-  host: process.env.SFTP_HOST,
-  username: process.env.SFTP_USERNAME,
-  password: process.env.SFTP_PASSWORD,
-  port: process.env.SFTP_PORT,
-  retries: 5,
-  retry_factor: 2,
-  retry_minTimeout: 2000,
-};
-
-async function connectSFTP() {
-  sftp = new Client();
-
-  try {
-    await sftp.connect(sftpConfig);
-    console.log("Connected to SFTP server.");
-  } catch (err) {
-    console.error("SFTP connection error:", err);
-    process.exit(1); // Exit the application if the SFTP connection fails
-  }
-}
-
-await connectSFTP(); // Initialize SFTP before exporting
-
 const app = express();
 
 // Middleware to serve static files
@@ -103,5 +76,32 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+// SFTP CLIENT
+import Client from "ssh2-sftp-client";
+let sftp; // Declare sftp as a let variable
+const sftpConfig = {
+  host: process.env.SFTP_HOST,
+  username: process.env.SFTP_USERNAME,
+  password: process.env.SFTP_PASSWORD,
+  port: process.env.SFTP_PORT,
+  retries: 5,
+  retry_factor: 2,
+  retry_minTimeout: 2000,
+};
+
+async function connectSFTP() {
+  sftp = new Client();
+
+  try {
+    await sftp.connect(sftpConfig);
+    console.log("Connected to SFTP server.");
+  } catch (err) {
+    console.error("SFTP connection error:", err);
+    process.exit(1); // Exit the application if the SFTP connection fails
+  }
+}
+
+await connectSFTP(); // Initialize SFTP before exporting
 
 export { sftp, sftpConfig }; // Export after sftp is initialized

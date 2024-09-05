@@ -9,19 +9,66 @@
 </head>
 
 <body>
+    <nav
+        class="sm:hidden bg-gradient-to-br from-slate-800 to-slate-900 w-full sticky top-0 left-0 py-2 px-2 flex justify-end shadow-md">
+        <button onclick="showSlider()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff"
+                fill="none">
+                <path d="M3.99963 5.00061L9.99963 5.00037" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                <path d="M12.9996 5.00037L19.9996 5.00037" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                <path d="M15.9996 9.00037L15.9996 15.0004" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                <path d="M9.99963 2.00037L9.99963 8.00037" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                <path d="M11.9996 16.0004L11.9996 22.0004" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                <path d="M15.9996 12.0001L19.9996 12.0004" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                <path d="M3.99963 12.0006L12.9996 12.0004" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                <path d="M11.9996 19.0004L19.9996 19.0004" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+                <path d="M3.99963 19.0006L8.99963 19.0004" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+            </svg>
+        </button>
+    </nav>
     <main class="flex flex-row h-screen w-full box-border">
-        <section class="bg-gradient-to-br from-slate-800 to-slate-900 w-2/6 lg:w-1/6 h-full pt-2 border-r-4 border-gray-400 sm:block hidden">
+        <section
+            class="bg-gradient-to-br from-slate-800 to-slate-900 w-2/6 lg:w-1/6 h-full pt-2 border-r-4 border-gray-400 sm:block hidden"
+            id="navPanel">
             <h1 class="text-slate-200 text-2xl text-center">{{user}}</h1>
             <div class="flex flex-col px-6 gap-4 pt-4">
-                <a href="/dashboard"><div class="px-2 py-1 bg-slate-700 rounded-md h-8"><h1 class="text-slate-200 font-semibold text-md">Dashboard</h1></div></a>
-                <a href="/dashboard/upload"><div class="px-2 py-1 bg-slate-700 rounded-md h-8"><h1 class="text-slate-200 font-semibold text-md">Upload</h1></div></a>
-                <a href="/dashboard/gallery"><div class="px-2 py-1 bg-slate-700 rounded-md h-8"><h1 class="text-slate-200 font-semibold text-md">Gallery</h1></div></a>
+                <a href="/dashboard">
+                    <div class="px-2 py-1 bg-slate-700 rounded-md h-8">
+                        <h1 class="text-slate-200 font-semibold text-md">Dashboard</h1>
+                    </div>
+                </a>
+                <a href="/dashboard/upload">
+                    <div class="px-2 py-1 bg-slate-700 rounded-md h-8">
+                        <h1 class="text-slate-200 font-semibold text-md">Upload</h1>
+                    </div>
+                </a>
+                <a href="/dashboard/gallery">
+                    <div class="px-2 py-1 bg-slate-700 rounded-md h-8">
+                        <h1 class="text-slate-200 font-semibold text-md">Gallery</h1>
+                    </div>
+                </a>
             </div>
         </section>
-        <section class="bg-gradient-to-br from-slate-700 to-slate-900 w-full md-5/6 h-full">
+        <section class="bg-gradient-to-br from-slate-700 to-slate-900 w-full md-5/6 h-full" id="mainPanel">
             {{{body}}}
         </section>
     </main>
+    <script>
+        function showSlider() {
+            document.getElementById('navPanel').classList.toggle('hidden');
+            document.getElementById('navPanel').classList.toggle('w-full');
+            document.getElementById('mainPanel').classList.toggle('hidden');
+        }
+    </script>
 </body>
 
 </html>

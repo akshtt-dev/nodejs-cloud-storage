@@ -5,27 +5,13 @@
     <h1 class="text-slate-200 text-4xl font-bold">{{filesCount}}</h1>
   </div>
 
-  <!-- File Upload Section -->
-  <form class="flex flex-col items-center gap-4" id="upload-form">
-    <!-- Hidden file input -->
-    <input type="file" name="file" id="file" class="hidden">
-    <!-- Custom file input box -->
-    <label for="file" class="w-full max-w-xs h-64 bg-slate-900 rounded-lg p-4 flex flex-col justify-center items-center cursor-pointer transition-colors duration-200 hover:bg-slate-800">
-      <!-- SVG Icon -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" class="w-16 h-16 text-slate-200" fill="none">
-        <path d="M3 14l.234.663c.91 2.578 1.365 3.868 2.404 4.602C7.676 20 9.044 20 11.778 20h2.444c2.734 0 4.102 0 5.14-.735 1.04-.735 1.495-2.025 2.405-4.602L21 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M12 4v10M12 4c-.7 0-2.008 2.994-2.5 3.5M12 4c.7 0 2.008 2.994 2.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span id="fileLabel" class="mt-4 text-slate-400">No file chosen</span>
-    </label>
-  </form>
-
   <!-- Image Thumbnails Section -->
   <div class="flex flex-wrap gap-4 bg-slate-800 p-6 rounded-lg overflow-y-auto">
     {{#each files}}
     <div class="bg-slate-900 p-4 rounded-lg shadow-md transition-shadow duration-300 hover:shadow-xl">
       <a href="javascript:void(0);" onclick="previewFile('{{filename}}')" class="block">
-        <img src="/file/preview/{{filename}}" alt="{{originalName}}" class="mx-auto w-48 h-48 object-cover rounded-md shadow-sm transition-opacity duration-200 hover:opacity-90">
+        <img src="/file/preview/{{filename}}" alt="{{originalName}}"
+          class="mx-auto w-48 h-48 object-cover rounded-md shadow-sm transition-opacity duration-200 hover:opacity-90">
       </a>
       <div class="mt-2 text-center">
         <h2 class="text-slate-300 text-lg font-medium truncate">{{originalName}}</h2>
@@ -34,7 +20,8 @@
         <p class="text-slate-500 text-sm">Type: {{fileType}}</p>
       </div>
       <a href="/file/download/{{filename}}" class="block mt-2" download="{{originalName}}">
-        <div class="w-full py-1 bg-green-600 rounded-sm text-center text-white text-md font-semibold transition-colors duration-200 hover:bg-green-700">
+        <div
+          class="w-full py-1 bg-green-600 rounded-sm text-center text-white text-md font-semibold transition-colors duration-200 hover:bg-green-700">
           Download
         </div>
       </a>
@@ -44,56 +31,17 @@
 </section>
 
 <!-- Preview Section -->
-<div id="preview-container" class="fixed inset-0 bg-black bg-opacity-80 items-center justify-center z-50 transition-opacity duration-300 hidden">
+<div id="preview-container"
+  class="fixed inset-0 bg-black bg-opacity-80 items-center justify-center z-50 transition-opacity duration-300 hidden">
   <div class="relative bg-slate-900 p-4 rounded-lg shadow-2xl max-w-4xl max-h-[80vh] overflow-hidden animate-fade-in">
-    <button onclick="closePreview()" class="absolute top-2 right-2 text-white text-2xl hover:text-gray-400 transition duration-200">×</button>
+    <button onclick="closePreview()"
+      class="absolute top-2 right-2 text-white text-2xl hover:text-gray-400 transition duration-200">×</button>
     <img id="preview-image" class="max-w-full max-h-full hidden" />
     <video id="preview-video" class="max-w-full max-h-full hidden" controls></video>
   </div>
 </div>
 
 <script>
-  const fileInput = document.getElementById('file');
-  const fileLabel = document.getElementById('fileLabel');
-
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files.length > 0) {
-      fileLabel.textContent = fileInput.files[0].name;
-      autoUploadFile(); // Automatically upload the file when selected
-    } else {
-      fileLabel.textContent = 'No file chosen';
-    }
-  });
-
-  async function autoUploadFile() {
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/file/upload');
-
-    xhr.upload.addEventListener('progress', (e) => {
-      if (e.lengthComputable) {
-        const percentComplete = (e.loaded / e.total) * 100;
-        console.log(`Upload Progress: ${percentComplete.toFixed(2)}%`);
-      }
-    });
-
-    xhr.addEventListener('load', () => {
-      if (xhr.status === 200) {
-        alert('File uploaded successfully!');
-        // Optionally, refresh the file list or perform other actions
-      } else {
-        alert('Failed to upload file');
-      }
-    });
-
-    xhr.addEventListener('error', () => {
-      alert('An error occurred during the file upload');
-    });
-
-    xhr.send(formData);
-  }
 
   function previewFile(filename) {
     const previewContainer = document.getElementById('preview-container');
