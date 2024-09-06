@@ -31,7 +31,7 @@ router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
 router.get("/", (req, res) => {
-  res.render("file");
+  res.redirect("/dashboard/files");
 });
 
 router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {

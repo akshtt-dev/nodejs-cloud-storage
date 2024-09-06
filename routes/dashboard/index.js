@@ -19,12 +19,12 @@ router.get("/upload", checkAuth, (req, res) => {
   });
 });
 
-router.get("/gallery", checkAuth, async (req, res) => {
+router.get("/files", checkAuth, async (req, res) => {
   try {
     const files = await listFilesFunction(req.session.user.username);
-    res.render("dashboard/gallery", {
+    res.render("dashboard/files", {
       layout: "dashboard",
-      title: "Dashboard - Gallery",
+      title: "Dashboard - Files",
       user: req.session.user.username,
       files: files,
       filesCount: files.length,

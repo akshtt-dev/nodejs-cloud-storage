@@ -53,10 +53,18 @@ app.use(
   })
 );
 
+// TODO: Add more authentication, authorization, and error handling, make sure to check user token
+import Account from "./models/accounts.js";
 // Middleware to check if user is authenticated
 export function checkAuth(req, res, next) {
   if (req.session.user) {
-    next();
+    Account.findOne({ username: req.session.user.username }).then((user) => {
+      if (user) {
+        next();
+      } else {
+        res.redirect("/auth/login");
+      }
+    });
   } else {
     res.redirect("/auth/login");
   }
