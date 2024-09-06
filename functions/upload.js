@@ -43,6 +43,7 @@ async function uploadFunction(file, uniqueFilename, username) {
     await sftp.put(readStream, remotePath);
 
     console.log("File uploaded successfully to SFTP:", remotePath);
+    fs.unlinkSync(file.path); // Delete the local file after uploading
   } catch (err) {
     console.error("Error accessing SFTP:", err);
   }

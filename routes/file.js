@@ -90,11 +90,8 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
     // Attempt to upload the file to the SFTP server
     try {
       await uploadFunction(file, file.filename, username);
-      // Delete the local file only if the SFTP upload succeeds
-      await fs.unlink(imagePath);
     } catch (sftpError) {
       console.error("SFTP upload failed:", sftpError);
-      // Keep the local file if SFTP upload fails
       return;
     }
   } catch (err) {
