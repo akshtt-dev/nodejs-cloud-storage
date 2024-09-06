@@ -98,7 +98,6 @@ async function connectSFTP() {
     console.log("Connected to SFTP server.");
   } catch (err) {
     console.error("SFTP connection error:", err);
-    process.exit(1); // Exit the application if the SFTP connection fails
   }
 }
 
