@@ -15,6 +15,18 @@ router.get("/signup", (req, res) => {
   res.render("auth/signup", { title: "Dashboard - Signup" });
 });
 
+router.get("/logout", (req, res) => {
+  try {
+    req.session.destroy(() => {
+      res.redirect("/auth/login");
+    });
+  }
+  catch (error) {
+    console.error(error);
+    res.redirect("/auth/login");
+  }
+});
+
 // Signup route
 router.post("/signup", async (req, res) => {
   const { username, password } = req.body;
