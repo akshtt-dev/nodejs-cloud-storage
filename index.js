@@ -53,20 +53,32 @@ app.use(
   })
 );
 
-// TODO: Add more authentication, authorization, and error handling, make sure to check user token
 import Account from "./models/accounts.js";
 // Middleware to check if user is authenticated
-export function checkAuth(req, res, next) {
-  if (req.session.user) {
-    Account.findOne({ username: req.session.user.username }).then((user) => {
+export async function checkAuth(req, res, next) {
+  try {
+    if (req.session.user) {
+      const user = await Account.findOne({
+        username: req.session.user.username,
+      });
+
       if (user) {
-        next();
+        return next();
       } else {
-        res.redirect("/auth/login");
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Error destroying session:", err);
+            return res.status(500).send("Internal Server Error");
+          }
+          return res.redirect("/auth/login");
+        });
       }
-    });
-  } else {
-    res.redirect("/auth/login");
+    } else {
+      return res.redirect("/auth/login");
+    }
+  } catch (error) {
+    console.error("Error during authentication:", error);
+    return res.status(500).send("Internal Server Error");
   }
 }
 
