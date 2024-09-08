@@ -1,5 +1,6 @@
-<section class="flex flex-col space-y-6 h-full overflow-hidden bg-[url(/src/images/dashboard/catpuccino_mocha_riples_dark.png)] bg-center bg-cover bg-no-repeat">
-  <div class="flex flex-wrap gap-4 p-6 bg-slate-800 bg-opacity-95 overflow-y-auto md:h-full">
+<section
+  class="flex flex-col space-y-6 h-full overflow-hidden bg-[url(/src/images/dashboard/catpuccino_mocha_riples_dark.png)] bg-center bg-cover bg-no-repeat">
+  <div class="flex flex-wrap gap-4 p-6 bg-slate-800 bg-opacity-95 overflow-y-auto h-full">
     {{#unless filesCount }}
     <div class="w-full text-center text-slate-200">
       <h1 class="text-2xl font-semibold">No files Uploaded</h1>
@@ -11,9 +12,9 @@
         <img src="/file/preview/{{filename}}" alt="{{originalName}}"
           class="mx-auto w-48 h-48 object-cover rounded-md shadow-sm transition-opacity duration-200 hover:opacity-90">
       </a>
-      <div class="mt-2 text-center">
-        <h2 class="text-slate-300 text-lg font-medium truncate">{{originalName}}</h2>
-        <p class="text-slate-500 text-sm">Created: {{date}}</p>
+      <div class="text-center w-60">
+        <h2 class="text-slate-300 text-lg font-medium truncate text-center">{{originalName}}</h2>
+        <p class="text-slate-500 text-sm truncate text-center">Created: {{date}}</p>
         <p class="text-slate-500 text-sm">Size: {{size}} MB</p>
         <p class="text-slate-500 text-sm">Type: {{fileType}}</p>
       </div>
@@ -23,6 +24,12 @@
           Download
         </div>
       </a>
+      <button onclick="deleteFile('{{filename}}')" class="block mt-2 w-full">
+        <div
+          class="w-full py-1 bg-red-600 rounded-sm text-center text-white text-md font-semibold transition-colors duration-200 hover:bg-red-700">
+          Delete
+        </div>
+      </button>
     </div>
     {{/each}}
     {{/unless}}
@@ -41,6 +48,17 @@
 </div>
 
 <script>
+  function deleteFile(filename) {
+    fetch(`/file/delete/${filename}`, {
+      method: 'get'
+    }).then(res => {
+      if (res.ok) {
+        location.reload();
+      } else {
+        alert('Failed to delete file');
+      }
+    });
+  }
   function previewFile(filename) {
     const previewContainer = document.getElementById('preview-container');
     const previewImage = document.getElementById('preview-image');

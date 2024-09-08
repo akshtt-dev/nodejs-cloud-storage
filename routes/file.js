@@ -212,4 +212,29 @@ router.get("/download/:filename", checkAuth, async (req, res) => {
   }
 });
 
+router.get("/delete/:filename", checkAuth, async (req, res) => {
+  const username = req.session.user.username;
+  const filename = req.params.filename;
+
+  if (!filename) {
+    return res.status(400).json({ error: "No filename provided" });
+  }
+
+  try {
+    const result = await Upload.updateOne(
+      { username: username },
+      { $pull: { files: { filename: filename } } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    res.status(201).json({ message: "File deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    return res.status(500).json({ error: "Failed to delete file" });
+  }
+});
+
 export default router;
