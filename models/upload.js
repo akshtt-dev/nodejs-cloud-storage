@@ -25,6 +25,10 @@ const fileSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  filepath: {
+    type: String,
+    required: true,
+  },
 });
 
 const mongooseSchema = new mongoose.Schema({

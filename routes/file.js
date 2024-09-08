@@ -63,7 +63,7 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
       if (allowedMimeTypes.includes(mimeType)) {
         await processThumbnail(imagePath, thumbnailPath);
         thumbnailBuffer = await fs.readFile(thumbnailPath);
-        fs.unlink(thumbnailPath);
+        await fs.unlink(thumbnailPath);
       }
       // Save file info in MongoDB
       await Upload.findOneAndUpdate(
@@ -76,6 +76,7 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
               size: file.size,
               thumbnailBuffer,
               fileType: mimeType,
+              filepath: "local", // local file path initially
             },
           },
         },
@@ -90,6 +91,10 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
     // Attempt to upload the file to the SFTP server
     try {
       await uploadFunction(file, file.filename, username);
+      await Upload.updateOne(
+        { username: username, "files.filename": file.filename },
+        { $set: { "files.$.filepath": "remote" } }
+      );
     } catch (sftpError) {
       console.error("SFTP upload failed:", sftpError);
       return;
@@ -150,7 +155,9 @@ router.get("/download/:filename", checkAuth, async (req, res) => {
   try {
     const username = req.session.user.username;
     const filename = req.params.filename;
-
+    if (!filename) {
+      return res.status(400).json({ error: "No filename provided" });
+    }
     // Find the upload record in the database
     const upload = await Upload.findOne({
       username: username,
@@ -167,45 +174,57 @@ router.get("/download/:filename", checkAuth, async (req, res) => {
     const localDir = join(__dirname, "../public/src/uploads/tmp");
     const localPath = join(localDir, filename);
 
-    try {
-      await fs.access(localDir);
-    } catch (error) {
-      await fs.mkdir(localDir, { recursive: true });
-    }
-
-    // Download the file from SFTP server to the local path
-    try {
-      await sftp.fastGet(
-        `node-file-transfer/user-uploads/${username}/${filename}`,
-        localPath
-      );
-    } catch (error) {
-      console.error("Error downloading file from SFTP:", error);
-      return res
-        .status(500)
-        .json({ error: "Failed to download file from SFTP" });
-    }
-
-    // Verify the file exists before sending
-    try {
-      await fs.access(localPath);
-    } catch (error) {
-      console.error("Local file not found:", error);
-      return res.status(404).json({ error: "File not found on local server" });
-    }
-
-    // Send the file to the client
-    res.download(localPath, originalName, (err) => {
-      // Cleanup: Delete the local temporary file after sending it to the client
-      fs.unlink(localPath).catch((unlinkErr) => {
-        console.error("Error deleting temporary file:", unlinkErr);
-      });
-
-      if (err) {
-        console.error("Download error:", err);
-        return res.status(500).json({ error: "Failed to download file" });
+    if (upload.files.filepath === "remote") {
+      try {
+        await fs.access(localDir);
+      } catch (error) {
+        await fs.mkdir(localDir, { recursive: true });
       }
-    });
+
+      // Download the file from SFTP server to the local path
+      try {
+        await sftp.fastGet(
+          `node-file-transfer/user-uploads/${username}/${filename}`,
+          localPath
+        );
+      } catch (error) {
+        console.error("Error downloading file from SFTP:", error);
+        return res
+          .status(500)
+          .json({ error: "Failed to download file from SFTP" });
+      }
+
+      // Verify the file exists before sending
+      try {
+        await fs.access(localPath);
+      } catch (error) {
+        console.error("Local file not found:", error);
+        return res
+          .status(404)
+          .json({ error: "File not found on local server" });
+      }
+
+      // Send the file to the client
+      res.download(localPath, originalName, (err) => {
+        // Cleanup: Delete the local temporary file after sending it to the client
+        fs.unlink(localPath).catch((unlinkErr) => {
+          console.error("Error deleting temporary file:", unlinkErr);
+        });
+
+        if (err) {
+          console.error("Download error:", err);
+          return res.status(500).json({ error: "Failed to download file" });
+        }
+      });
+    } else {
+      const localPath = join(__dirname, "../public/src/uploads", filename);
+      res.download(localPath, originalName, (err) => {
+        if (err) {
+          console.error("Download error:", err);
+          return res.status(500).json({ error: "Failed to download file" });
+        }
+      });
+    }
   } catch (error) {
     console.error("Error in download route:", error);
     res.status(500).json({ error: "Failed to download file" });
@@ -221,19 +240,63 @@ router.get("/delete/:filename", checkAuth, async (req, res) => {
   }
 
   try {
+    // Find the file document in the database
+    const upload = await Upload.findOne({
+      username: username,
+      "files.filename": filename,
+    });
+
+    if (!upload) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Find the file metadata
+    const file = upload.files.find((f) => f.filename === filename);
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Check if the file is stored remotely (on the SFTP server)
+    if (file.filepath === "remote") {
+      try {
+        // Attempt to delete the file from the SFTP server
+        await sftp.delete(
+          `node-file-transfer/user-uploads/${username}/${filename}`
+        );
+        console.log(`File ${filename} deleted from SFTP server`);
+      } catch (error) {
+        console.error("Error deleting file from SFTP:", error);
+        return res
+          .status(500)
+          .json({ error: "Failed to delete file from SFTP" });
+      }
+    } else {
+      // If the file is stored locally, delete it from the local storage
+      const localPath = join(__dirname, "../public/src/uploads", filename);
+      try {
+        await fs.unlink(localPath);
+        console.log(`File ${filename} deleted from local storage`);
+      } catch (error) {
+        console.error("Error deleting local file:", error);
+        return res.status(500).json({ error: "Failed to delete local file" });
+      }
+    }
+
+    // Remove the file record from MongoDB
     const result = await Upload.updateOne(
       { username: username },
       { $pull: { files: { filename: filename } } }
     );
 
     if (result.modifiedCount === 0) {
-      return res.status(404).json({ error: "File not found" });
+      return res.status(404).json({ error: "File not found in database" });
     }
 
-    res.status(201).json({ message: "File deleted successfully" });
+    // Respond with success
+    res.status(200).json({ message: "File deleted successfully" });
   } catch (error) {
     console.error("Error deleting file:", error);
-    return res.status(500).json({ error: "Failed to delete file" });
+    res.status(500).json({ error: "Failed to delete file" });
   }
 });
 
