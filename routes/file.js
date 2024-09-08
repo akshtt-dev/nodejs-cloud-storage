@@ -14,8 +14,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, join(__dirname, "../public/src/uploads"));
+  destination: async (req, file, cb) => {
+    const localDir = join(__dirname, "../public/src/uploads");
+    try {
+      await fs.access(localDir);
+    } catch (error) {
+      await fs.mkdir(localDir, { recursive: true });
+    }
+    cb(null, localDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = uuidv4();
