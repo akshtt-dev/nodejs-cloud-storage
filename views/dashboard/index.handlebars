@@ -1,4 +1,33 @@
-<section class="flex flex-col justify-center items-center h-screen overflow-hidden">
-    <h1 class="text-slate-100 font-bold text-4xl">Hey, {{user}}</h1>
-    <h1 class="text-slate-300 font-semibold text-3xl">Welcome to the dashboard!</h1>
+<section class="bg-slate-900 flex flex-col h-screen overflow-hidden pt-4 md:pl-4 md:px-0 px-4">
+    <h1 class="text-slate-100 font-bold text-3xl">Hey, {{user}}</h1>
+    <div class="flex flex-col md:flex-row gap-4">
+        <div class="bg-slate-800 py-4 px-6 md:w-60 rounded-md shadow-lg select-none mt-4 w-full md:mx-0 mx-auto">
+            <h1 class="text-slate-400 text-xl font-medium">Files</h1>
+            <h1 class="text-slate-200 text-4xl font-bold">{{filesCount}}</h1>
+            <h1 class="text-slate-400 text-xl font-medium mt-4">Disk Usage</h1>
+            <h1 class="text-slate-200 text-4xl font-bold">{{totalDiskUsage}} MB</h1>
+        </div>
+        <div class="h-full w-full">
+            <canvas id="uploadDataChart" class="h-full w-full"></canvas>
+        </div>
+    </div>
+
+    
+    <script>
+        const ctx = document.getElementById('uploadDataChart');
+        const labels = ["January", "February", "March", "April", "May", "June", "July"];
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Upload Graph',
+                    data: ["323", "234", "345", "456", "567", "678", "789"],
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+                }]
+            }
+        });
+    </script>
 </section>
