@@ -1,6 +1,6 @@
 import { sftp } from "../index.js";
 import fs from "fs";
-
+import reportFailUpload from "../models/failUpload.js";
 async function uploadFunction(file, uniqueFilename, username) {
   try {
     // Define the target directory on the SFTP server
@@ -45,7 +45,24 @@ async function uploadFunction(file, uniqueFilename, username) {
     console.log("File uploaded successfully to SFTP:", remotePath);
     fs.unlinkSync(file.path); // Delete the local file after uploading
   } catch (err) {
-    console.error("Error accessing SFTP:", err);
+    await reportFailUpload.findOneAndUpdate(
+      { username: username },
+      {
+        $push: {
+          files: [
+            {
+              originalName: file.originalname,
+              filename: uniqueFilename,
+              date: new Date(),
+              size: file.size,
+              fileType: file.mimetype,
+            },
+          ],
+        },
+      },
+      { upsert: true, new: true }
+    );
+    throw err;
   }
 }
 

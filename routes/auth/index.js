@@ -20,8 +20,7 @@ router.get("/logout", (req, res) => {
     req.session.destroy(() => {
       res.redirect("/auth/login");
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error(error);
     res.redirect("/auth/login");
   }
@@ -30,6 +29,10 @@ router.get("/logout", (req, res) => {
 // Signup route
 router.post("/signup", async (req, res) => {
   const { username, password } = req.body;
+  const regex = /^[a-zA-Z0-9]+$/;
+  if (!regex.test(username)) {
+    return res.redirect("/auth/signup?error=Invalid username");
+  }
   if (username && password) {
     if (await Account.exists({ username })) {
       return res.redirect("/auth/signup?error=Username already exists");
@@ -49,10 +52,13 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-
 // Login route
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
+  const regex = /^[a-zA-Z0-9]+$/;
+  if (!regex.test(username)) {
+    return res.redirect("/auth/signup?error=Invalid username");
+  }
   try {
     const user = await Account.findOne({ username });
     if (user) {

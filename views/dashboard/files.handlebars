@@ -1,14 +1,12 @@
-<section class="flex flex-col pt-4 px-4 space-y-6 h-full overflow-hidden">
-  <!-- File Stats Section -->
-  <div class="bg-slate-900 py-4 px-6 md:w-60 rounded-md shadow-lg select-none">
-    <h1 class="text-slate-400 text-xl font-medium">Files</h1>
-    <h1 class="text-slate-200 text-4xl font-bold">{{filesCount}}</h1>
-  </div>
-
-  <!-- Image Thumbnails Section -->
-  <div class="flex flex-wrap gap-4 bg-slate-800 p-6 rounded-lg overflow-y-auto">
+<section class="flex flex-col space-y-6 h-full overflow-hidden bg-[url(/src/images/dashboard/catpuccino_mocha_riples_dark.png)] bg-center bg-cover bg-no-repeat">
+  <div class="flex flex-wrap gap-4 p-6 bg-slate-800 bg-opacity-95 overflow-y-auto md:h-full">
+    {{#unless filesCount }}
+    <div class="w-full text-center text-slate-200">
+      <h1 class="text-2xl font-semibold">No files Uploaded</h1>
+    </div>
+    {{else}}
     {{#each files}}
-    <div class="bg-slate-900 p-4 rounded-lg shadow-md transition-shadow duration-300 hover:shadow-xl">
+    <div class="bg-slate-900 p-4 rounded-lg shadow-md transition-shadow duration-300 hover:shadow-xl h-fit">
       <a href="javascript:void(0);" onclick="previewFile('{{filename}}')" class="block">
         <img src="/file/preview/{{filename}}" alt="{{originalName}}"
           class="mx-auto w-48 h-48 object-cover rounded-md shadow-sm transition-opacity duration-200 hover:opacity-90">
@@ -27,6 +25,7 @@
       </a>
     </div>
     {{/each}}
+    {{/unless}}
   </div>
 </section>
 
@@ -42,7 +41,6 @@
 </div>
 
 <script>
-
   function previewFile(filename) {
     const previewContainer = document.getElementById('preview-container');
     const previewImage = document.getElementById('preview-image');

@@ -2,26 +2,30 @@ import Upload from "../models/upload.js";
 
 export async function listFilesFunction(username) {
   try {
-    // Retrieve the document for the specified username
     const upload = await Upload.findOne({ username: username });
 
-    // Check if the document was found
     if (!upload) {
-      return [];
+      return { files: [], totalDiskUsage: 0 };
     }
 
-    const files = upload.files.map((file) => ({
-      originalName: file.originalName,
-      filename: file.filename,
-      date: file.date.toISOString(), // Send ISO string to the client
-      size: (file.size / 1024 / 1024).toFixed(2), // Convert size to MB and format to two decimal places
-      thumbnailBuffer: file.thumbnailBuffer,
-      fileType: file.fileType,
-    }));
+    let totalDiskUsage = 0;
+    const files = upload.files.map((file) => {
+      const fileSizeMB = file.size / 1024 / 1024; // Convert size to MB
+      totalDiskUsage += fileSizeMB; // total disk usage in MB
 
-    return files;
+      return {
+        originalName: file.originalName,
+        filename: file.filename,
+        date: file.date,
+        size: fileSizeMB.toFixed(2),
+        thumbnailBuffer: file.thumbnailBuffer,
+        fileType: file.fileType,
+      };
+    });
+
+    return { files, totalDiskUsage: totalDiskUsage.toFixed(2) }; // Return total disk usage
   } catch (err) {
     console.error("Error listing files:", err);
-    return [];
+    return { files: [], totalDiskUsage: 0 };
   }
 }

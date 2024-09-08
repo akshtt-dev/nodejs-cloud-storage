@@ -65,7 +65,7 @@ export async function checkAuth(req, res, next) {
       if (user) {
         return next();
       } else {
-        req.session.destroy((err) => {
+        return req.session.destroy((err) => {
           if (err) {
             console.error("Error destroying session:", err);
             return res.status(500).send("Internal Server Error");
