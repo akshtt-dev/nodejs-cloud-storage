@@ -1,24 +1,26 @@
 <section
   class="flex flex-col space-y-6 h-full overflow-hidden bg-[url(/src/images/dashboard/catpuccino_mocha_riples_dark.png)] bg-center bg-cover bg-no-repeat">
-  <div class="flex flex-col sm:flex-row sm:flex-wrap sm:gap-4 py-0 px-6 sm:p-6 bg-slate-800 bg-opacity-95 overflow-y-auto h-full">
+  <div
+    class="flex flex-col sm:flex-row sm:flex-wrap sm:gap-4 py-0 px-6 sm:p-6 bg-slate-800 bg-opacity-95 overflow-y-auto h-full">
     {{#unless filesCount }}
     <div class="w-full text-center text-slate-200">
       <h1 class="text-2xl font-semibold">No files Uploaded</h1>
     </div>
     {{else}}
     {{#each files}}
-    <div class="bg-slate-900 p-4 sm:rounded-lg shadow-md transition-shadow duration-300 hover:shadow-xl h-fit flex sm:flex-col flex-row w-full sm:w-auto">
+    <div
+      class="bg-slate-900 p-4 sm:rounded-lg shadow-md transition-shadow duration-300 hover:shadow-xl h-fit flex sm:flex-col flex-row w-full sm:w-auto  sm:justify-normal justify-evenly">
       <a href="javascript:void(0);" onclick="previewFile('{{filename}}')" class="block">
         <img src="/file/preview/{{filename}}" alt="{{originalName}}"
-          class="mx-auto w-12 h-12 sm:w-48 sm:h-48 object-cover rounded-md shadow-sm transition-opacity duration-200 hover:opacity-90">
+          class="mx-auto min-w-12 h-12 sm:w-48 sm:h-48 object-cover rounded-md shadow-sm transition-opacity duration-200 hover:opacity-90">
       </a>
-      <div class="sm:text-center w-60 flex flex-col sm:ml-0 ml-4">
+      <div class="w-auto sm:w-60 flex flex-col sm:ml-0 ml-4 overflow-y-hidden">
         <h2 class="text-slate-300 text-lg font-medium truncate">{{originalName}}</h2>
         <p class="text-slate-500 text-sm truncate">Created: {{date}}</p>
         <p class="text-slate-500 text-sm sm:block hidden">Size: {{size}} MB</p>
         <p class="text-slate-500 text-sm sm:block hidden">Type: {{fileType}}</p>
       </div>
-      <a href="/file/download/{{filename}}" class="hidden sm:block sm:mt-2" download="{{originalName}}">
+      <a href="/file/download/{{filename}}" class="hidden sm:block sm:mt-2">
         <div
           class="w-full py-1 bg-green-600 rounded-sm text-center text-white text-md font-semibold transition-colors duration-200 hover:bg-green-700">
           Download
@@ -30,8 +32,8 @@
           Delete
         </div>
       </button>
-      <div class="sm:hidden">
-        <button>{{{optionsSvg}}}</button>
+      <div class="sm:hidden flex items-center">
+        <button onclick="previewOptions('{{filename}}', '{{orginalName}}')">{{{../optionsSvg}}}</button>
       </div>
     </div>
     {{/each}}
@@ -50,7 +52,40 @@
   </div>
 </div>
 
+<div id="preview-options-container"
+  class="absolute top-[50vh] left-[50vw] translate-x-[-50%] translate-y-[-50%] inset-0 bg-opacity-80 items-center justify-center z-50 transition-opacity duration-300 hidden w-full h-full">
+</div>
+
+
 <script>
+  function previewOptions(filename, originalName) {
+    const previewOptionsContainer = document.getElementById('preview-options-container');
+    previewOptionsContainer.classList.remove('hidden');
+    previewOptionsContainer.classList.add('flex');
+    previewOptionsContainer.innerHTML = `<div
+    class="relative bg-slate-900 p-6 rounded-lg shadow-2xl max-w-4xl overflow-hidden animate-fade-in flex flex-col gap-4 w-[90vw] sm:w-[50vw]">
+    <button onclick="closePreviewOptions()">
+      <a href="/file/download/${filename}" download="${originalName}"
+      class="border border-slate-700 py-2 rounded-lg hover:bg-green-600 transition-colors text-center block w-full">
+        <h1 class="text-slate-300 text-lg">Download</h1>
+      </a>
+    </button>
+    <button onclick="deleteFile('${filename}')"
+      class="border border-slate-700 py-2 rounded-lg hover:bg-red-600 transition-colors">
+      <h1 class="text-slate-300 text-lg">Delete</h1>
+    </button>
+    <button onclick="closePreviewOptions()"
+      class="border border-slate-700 py-2 rounded-lg hover:bg-slate-800 transition-colors">
+      <h1 class="text-slate-300 text-lg">Close</h1>
+    </button>
+  </div>`;
+  }
+
+  function closePreviewOptions() {
+    const previewOptionsContainer = document.getElementById('preview-options-container');
+    previewOptionsContainer.classList.add('hidden');
+  }
+
   function deleteFile(filename) {
     fetch(`/file/delete/${filename}`, {
       method: 'get'

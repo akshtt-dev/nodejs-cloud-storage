@@ -20,7 +20,7 @@ export const hamburgerSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 
                     stroke-linecap="round" />
             </svg>`;
 
-export const optionsSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+export const optionsSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" color="#ffffff" fill="none" class="align-middle h-8 w-6">
     <path d="M11.992 12H12.001" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
     <path d="M11.9842 18H11.9932" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
     <path d="M11.9998 6H12.0088" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
