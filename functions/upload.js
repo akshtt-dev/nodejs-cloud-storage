@@ -1,14 +1,14 @@
+import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import { sftp } from "../index.js";
-import fs from "fs";
 import reportFailUpload from "../models/failUpload.js";
+
 async function uploadFunction(file, uniqueFilename, username) {
   try {
-    // Define the target directory on the SFTP server
     const targetDir = "node-file-transfer";
-    // Use a forward slash to construct the remote path
     const remotePath = `${targetDir}/user-uploads/${username}/${uniqueFilename}`;
 
-    // Check if the target directory exists, and create it if it does not
+    // Ensure the target directory exists
     try {
       const dirExists = await sftp.exists(targetDir);
       if (!dirExists) {
@@ -17,19 +17,23 @@ async function uploadFunction(file, uniqueFilename, username) {
       }
     } catch (err) {
       console.error("Error ensuring directory exists on SFTP:", err);
-      throw err; // Propagate the error
+      throw err;
     }
 
-    const localFileSize = fs.statSync(file.path).size; // Get the local file size
+    // Get the local file size
+    const stat = await fsPromises.stat(file.path);
+    const localFileSize = stat.size;
     let uploadedBytes = 0;
 
     // Create a read stream for the local file
     const readStream = fs.createReadStream(file.path);
-
-    // Hook into the 'data' event to track progress
+    
     let progress = 0;
     let lastProgress = 0;
+    
     console.log("Uploading file to SFTP server...");
+    
+    // Track progress as the file is being uploaded
     readStream.on("data", (chunk) => {
       uploadedBytes += chunk.length;
       progress = (uploadedBytes / localFileSize) * 100;
@@ -39,12 +43,24 @@ async function uploadFunction(file, uniqueFilename, username) {
       }
     });
 
-    // Upload the file to the SFTP server with the unique filename
+    // Use the stream to upload the file to SFTP
     await sftp.put(readStream, remotePath);
 
     console.log("File uploaded successfully to SFTP:", remotePath);
-    fs.unlinkSync(file.path); // Delete the local file after uploading
+
+    // Close the stream manually once the upload is complete
+    readStream.destroy();
+
+    // Delete the local file after the upload is complete
+    try {
+      await fsPromises.unlink(file.path);
+      console.log("File deleted successfully after upload.");
+    } catch (err) {
+      console.error("Error deleting file after upload:", err);
+    }
+
   } catch (err) {
+    // Log failed uploads to the database
     await reportFailUpload.findOneAndUpdate(
       { username: username },
       {

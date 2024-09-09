@@ -165,82 +165,66 @@ import { sftp } from "../index.js";
 // TODO: works for now but still need to be refactored
 router.get("/download/:filename", checkAuth, async (req, res) => {
   try {
-    const username = req.session.user.username;
-    const filename = req.params.filename;
+    const { username } = req.session.user;
+    const { filename } = req.params;
     if (!filename) {
       return res.status(400).json({ error: "No filename provided" });
     }
+
     // Find the upload record in the database
     const upload = await Upload.findOne({
-      username: username,
+      username,
       "files.filename": filename,
     });
-    const originalName = upload.files.find(
-      (file) => file.filename === filename
-    ).originalName;
+
     if (!upload) {
       return res.status(404).json({ error: "File not found" });
     }
 
-    // Define the local temporary path where the file will be downloaded
-    const localDir = join(__dirname, "../private/uploads/tmp");
-    const localPath = join(localDir, filename);
+    const file = upload.files.find((f) => f.filename === filename);
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
 
-    if (upload.files.filepath === "remote") {
-      try {
-        await fs.access(localDir);
-      } catch (error) {
-        await fs.mkdir(localDir, { recursive: true });
-      }
+    const originalName = file.originalName;
+    const localDir = join(__dirname, "../private/uploads");
+    const localTmpDir = join(localDir, "tmp");
+    const localFilePath = join(localDir, username, filename);
 
-      // Download the file from SFTP server to the local path
+    // Check if file is stored remotely
+    if (file.filepath === "remote") {
       try {
+        await fs.mkdir(localTmpDir, { recursive: true });
+
+        const tmpFilePath = join(localTmpDir, filename);
         await sftp.fastGet(
           `node-file-transfer/user-uploads/${username}/${filename}`,
-          localPath
+          tmpFilePath
         );
-      } catch (error) {
-        console.error("Error downloading file from SFTP:", error);
-        return res
-          .status(500)
-          .json({ error: "Failed to download file from SFTP" });
-      }
 
-      // Verify the file exists before sending
-      try {
-        await fs.access(localPath);
-      } catch (error) {
-        console.error("Local file not found:", error);
-        return res
-          .status(404)
-          .json({ error: "File not found on local server" });
-      }
-
-      // Send the file to the client
-      res.download(localPath, originalName, (err) => {
-        // Cleanup: Delete the local temporary file after sending it to the client
-        fs.unlink(localPath).catch((unlinkErr) => {
-          console.error("Error deleting temporary file:", unlinkErr);
+        // Send file and delete temp file after download
+        return res.download(tmpFilePath, originalName, async (err) => {
+          if (err) {
+            console.error("Download error:", err);
+            return res.status(500).json({ error: "Failed to download file" });
+          }
+          await fs
+            .unlink(tmpFilePath)
+            .catch((err) => console.error("Failed to delete temp file:", err));
         });
-
-        if (err) {
-          console.error("Download error:", err);
-          return res.status(500).json({ error: "Failed to download file" });
-        }
-      });
-    } else {
-      const localPath = join(
-        __dirname,
-        `../private/uploads/${username}`,
-        filename
-      );
-      res.download(localPath, originalName, (err) => {
-        if (err) {
-          console.error("Download error:", err);
-          return res.status(500).json({ error: "Failed to download file" });
-        }
-      });
+      } catch (error) {
+        console.error("Error handling remote file:", error);
+        return res.status(500).json({ error: "Failed to handle remote file" });
+      }
     }
+
+    // Handle local file
+    res.download(localFilePath, originalName, (err) => {
+      if (err) {
+        console.error("Download error:", err);
+        return res.status(500).json({ error: "Failed to download file" });
+      }
+    });
   } catch (error) {
     console.error("Error in download route:", error);
     res.status(500).json({ error: "Failed to download file" });
@@ -416,10 +400,9 @@ router.get("/create-folder/:foldername", checkAuth, async (req, res) => {
     }
     const uuid = uuidv4();
     // Check if the folder already exist if not then create it
-    await fs.mkdir(
-      join(__dirname, `../private/uploads/${username}/${uuid}`),
-      { recursive: true }
-    );
+    await fs.mkdir(join(__dirname, `../private/uploads/${username}/${uuid}`), {
+      recursive: true,
+    });
     await Upload.findOneAndUpdate(
       { username: username },
       {
