@@ -81,7 +81,7 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
               filename: file.filename,
               size: file.size,
               thumbnailBuffer,
-              fileType: mimeType,
+              fileType: mimeType || "other",
               filepath: "local", // local file path initially
             },
           },
