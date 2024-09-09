@@ -6,7 +6,9 @@ const router = express.Router();
 
 router.get("/", checkAuth, async (req, res) => {
   try {
-    const { files, totalDiskUsage } = await listFilesFunction(req.session.user.username);
+    const { files, totalDiskUsage } = await listFilesFunction(
+      req.session.user.username
+    );
     res.render("dashboard/index", {
       layout: "dashboard",
       title: "Dashboard",
@@ -14,7 +16,7 @@ router.get("/", checkAuth, async (req, res) => {
       files,
       filesCount: files.length,
       totalDiskUsage,
-      hamburgerSvg: svg.hamburgerSvg
+      hamburgerSvg: svg.hamburgerSvg,
     });
   } catch (err) {
     console.error("Error retrieving files:", err);
@@ -27,6 +29,7 @@ router.get("/upload", checkAuth, (req, res) => {
     layout: "dashboard",
     title: "Dashboard - Upload",
     user: req.session.user.username,
+    hamburgerSvg: svg.hamburgerSvg,
   });
 });
 
@@ -39,7 +42,8 @@ router.get("/files", checkAuth, async (req, res) => {
       user: req.session.user.username,
       files,
       filesCount: files.length,
-      hamburgerSvg: svg.hamburgerSvg
+      hamburgerSvg: svg.hamburgerSvg,
+      optionsSvg: svg.optionsSvg,
     });
   } catch (err) {
     console.error("Error retrieving files:", err);

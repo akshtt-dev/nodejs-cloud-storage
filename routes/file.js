@@ -15,7 +15,7 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const localDir = join(__dirname, "../public/src/uploads");
+    const localDir = join(__dirname, "../private/uploads");
     try {
       await fs.access(localDir);
     } catch (error) {
@@ -55,10 +55,10 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
     "image/webp",
     "image/avif",
   ];
-  const imagePath = join(__dirname, "../public/src/uploads", file.filename);
+  const imagePath = join(__dirname, "../private/uploads", file.filename);
   const thumbnailPath = join(
     __dirname,
-    "../public/src/uploads",
+    "../private/uploads",
     `thumb_${file.filename}`
   );
 
@@ -177,7 +177,7 @@ router.get("/download/:filename", checkAuth, async (req, res) => {
     }
 
     // Define the local temporary path where the file will be downloaded
-    const localDir = join(__dirname, "../public/src/uploads/tmp");
+    const localDir = join(__dirname, "../private/uploads/tmp");
     const localPath = join(localDir, filename);
 
     if (upload.files.filepath === "remote") {
@@ -223,7 +223,7 @@ router.get("/download/:filename", checkAuth, async (req, res) => {
         }
       });
     } else {
-      const localPath = join(__dirname, "../public/src/uploads", filename);
+      const localPath = join(__dirname, "../private/uploads", filename);
       res.download(localPath, originalName, (err) => {
         if (err) {
           console.error("Download error:", err);
@@ -278,7 +278,7 @@ router.get("/delete/:filename", checkAuth, async (req, res) => {
       }
     } else {
       // If the file is stored locally, delete it from the local storage
-      const localPath = join(__dirname, "../public/src/uploads", filename);
+      const localPath = join(__dirname, "../private/uploads", filename);
       try {
         await fs.unlink(localPath);
         console.log(`File ${filename} deleted from local storage`);
