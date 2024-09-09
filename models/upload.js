@@ -31,11 +31,34 @@ const fileSchema = new mongoose.Schema({
   },
 });
 
+const directorySchema = new mongoose.Schema({
+  directoryName: {
+    type: String,
+    required: true,
+  },
+  directoryId: {
+    type: String,
+    required: true
+  },
+  files: {
+    type: [fileSchema],
+    default: [],
+  },
+  dirpath: {
+    type: String,
+    default: "local",
+  },
+});
+
 const mongooseSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
     unique: true, // Ensure the username is unique in the collection
+  },
+  directories: {
+    type: [directorySchema],
+    default: [],
   },
   files: {
     type: [fileSchema], // Array of file details
@@ -43,6 +66,7 @@ const mongooseSchema = new mongoose.Schema({
   },
 });
 
-const Upload = mongoose.models.Upload || mongoose.model("Upload", mongooseSchema);
+const Upload =
+  mongoose.models.Upload || mongoose.model("Upload", mongooseSchema);
 
 export default Upload;

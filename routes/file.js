@@ -7,6 +7,7 @@ import fs from "fs/promises";
 import mime from "mime-types";
 import uploadFunction from "../functions/upload.js";
 import Upload from "../models/upload.js";
+import Account from "../models/accounts.js";
 import { checkAuth } from "../index.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -15,7 +16,8 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const localDir = join(__dirname, "../private/uploads");
+    const username = req.session.user.username;
+    const localDir = join(__dirname, `../private/uploads/${username}`);
     try {
       await fs.access(localDir);
     } catch (error) {
@@ -55,10 +57,14 @@ router.post("/upload", checkAuth, upload.single("file"), async (req, res) => {
     "image/webp",
     "image/avif",
   ];
-  const imagePath = join(__dirname, "../private/uploads", file.filename);
+  const imagePath = join(
+    __dirname,
+    `../private/uploads/${username}`,
+    file.filename
+  );
   const thumbnailPath = join(
     __dirname,
-    "../private/uploads",
+    `../private/uploads/${username}`,
     `thumb_${file.filename}`
   );
 
@@ -223,7 +229,11 @@ router.get("/download/:filename", checkAuth, async (req, res) => {
         }
       });
     } else {
-      const localPath = join(__dirname, "../private/uploads", filename);
+      const localPath = join(
+        __dirname,
+        `../private/uploads/${username}`,
+        filename
+      );
       res.download(localPath, originalName, (err) => {
         if (err) {
           console.error("Download error:", err);
@@ -278,7 +288,11 @@ router.get("/delete/:filename", checkAuth, async (req, res) => {
       }
     } else {
       // If the file is stored locally, delete it from the local storage
-      const localPath = join(__dirname, "../private/uploads", filename);
+      const localPath = join(
+        __dirname,
+        `../private/uploads/${username}`,
+        filename
+      );
       try {
         await fs.unlink(localPath);
         console.log(`File ${filename} deleted from local storage`);
@@ -303,6 +317,127 @@ router.get("/delete/:filename", checkAuth, async (req, res) => {
   } catch (error) {
     console.error("Error deleting file:", error);
     res.status(500).json({ error: "Failed to delete file" });
+  }
+});
+
+router.get("/delete-folder/:foldername", checkAuth, async (req, res) => {
+  const folderId = req.params.foldername;
+  const username = req.session.user.username;
+
+  if (!folderId) {
+    return res.status(400).json({ error: "No folder name provided" });
+  }
+
+  try {
+    // Find the upload record in the database
+    const user = await Account.findOne({ username: username });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Find the folder in the database
+    const upload = await Upload.findOne({
+      username: username,
+      "directories.directoryId": folderId,
+    });
+
+    if (!upload) {
+      return res.status(404).json({ error: "Folder not found" });
+    }
+
+    // Find the folder metadata
+    const folder = upload.directories.find((f) => f.directoryId === folderId);
+
+    if (!folder) {
+      return res.status(404).json({ error: "Folder not found" });
+    }
+
+    // Check if the folder is stored remotely (on the SFTP server)
+    if (folder.filepath === "remote") {
+      try {
+        // Attempt to delete the folder from the SFTP server
+        await sftp.rmdir(
+          `node-file-transfer/user-uploads/${username}/${folderId}`
+        );
+        console.log(`Folder ${folderId} deleted from SFTP server`);
+      } catch (error) {
+        console.error("Error deleting folder from SFTP:", error);
+        return res
+          .status(500)
+          .json({ error: "Failed to delete folder from SFTP" });
+      }
+    } else {
+      // If the folder is stored locally, delete it from the local storage
+      const localPath = join(
+        __dirname,
+        `../private/uploads/${username}/${folderId}`
+      );
+      try {
+        await fs.rm(localPath, { recursive: true });
+        console.log(`Folder ${folderId} deleted from local storage`);
+      } catch (error) {
+        console.error("Error deleting local folder:", error);
+        return res.status(500).json({ error: "Failed to delete local folder" });
+      }
+    }
+
+    // Remove the folder record from MongoDB
+    const result = await Upload.findOneAndUpdate(
+      { username: username },
+      { $pull: { directories: { directoryId: folderId } } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: "Folder not found in database" });
+    }
+
+    // Respond with success
+    res.status(200).json({ message: "Folder deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting folder:", error);
+    res.status(500).json({ error: "Failed to delete folder" });
+  }
+});
+
+// TODO: fix any potential bugs
+router.get("/create-folder/:foldername", checkAuth, async (req, res) => {
+  const folderName = req.params.foldername;
+  const username = req.session.user.username;
+
+  if (!folderName) {
+    return res.status(400).json({ error: "No folder name provided" });
+  }
+
+  try {
+    // Find the upload record in the database
+    const user = await Account.findOne({ username: username });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const uuid = uuidv4();
+    // Check if the folder already exist if not then create it
+    await fs.mkdir(
+      join(__dirname, `../private/uploads/${username}/${uuid}`),
+      { recursive: true }
+    );
+    await Upload.findOneAndUpdate(
+      { username: username },
+      {
+        $push: {
+          directories: {
+            directoryName: folderName,
+            directoryId: uuid,
+            filepath: "local", // local file path initially
+          },
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ message: "Folder created successfully" });
+  } catch (error) {
+    console.error("Error creating folder:", error);
+    res.status(500).json({ error: "Failed to create folder" });
   }
 });
 
